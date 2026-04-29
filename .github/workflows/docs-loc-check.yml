@@ -1,4 +1,4 @@
-name: Docs LOC Check
+name: Docs Sanity Checks
 
 on:
   pull_request:
@@ -10,8 +10,7 @@ on:
       - 'TMWebDriver.py'
       - 'simphtml.py'
       - 'launch.pyw'
-      - 'docs/mint/concepts/architecture.mdx'
-      - 'docs/mint/scripts/check_loc.py'
+      - 'docs/mint/**'
   push:
     branches: [main]
 
@@ -25,3 +24,5 @@ jobs:
           python-version: '3.11'
       - name: Verify architecture.mdx LOC claims
         run: python docs/mint/scripts/check_loc.py
+      - name: Nav + JSX + frontmatter checks
+        run: python docs/mint/scripts/check_docs.py
