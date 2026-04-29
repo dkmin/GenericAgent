@@ -24,6 +24,7 @@ TMWebDriver.py      # CDP bridge for Chrome control
 hub.pyw             # legacy entrypoint (predecessor of launch.pyw)
 launch.pyw          # default entrypoint: starts Streamlit + optional bots/scheduler
 gatui.py            # terminal CLI (TUI) frontend — raw-mode ESC/Ctrl-C handling #260429-21
+gacli.py            # one-shot CLI — single prompt → response → exit; pipe/stdin friendly #260429-21
 mykey_template*.py  # copy to mykey.py and fill in API keys
 pyproject.toml      # extras: [ui], [all-frontends]; minimal core only by default
 
@@ -96,6 +97,8 @@ python launch.pyw            # default Streamlit + webview (port auto-selected)
 python launch.pyw --sched    # + reflect/scheduler.py for cron tasks
 python launch.pyw --tg --fs  # + Telegram + Feishu bots
 python gatui.py              # terminal CLI, no GUI deps  #260429-21
+python gacli.py "질문"        # one-shot: prompt → response → exit (pipeable)  #260429-21
+echo "질문" | python gacli.py --quiet --no-stream  # stdin + clean stdout for scripts  #260429-21
 streamlit run frontends/stapp2.py
 python frontends/qtapp.py
 ```

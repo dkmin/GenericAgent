@@ -8,6 +8,11 @@ and this project loosely follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `gacli.py` — one-shot CLI frontend: single prompt → response → exit. Reads
+  prompt from arg or stdin (pipe-friendly), writes answer to stdout and logs
+  to stderr so output redirects cleanly. Flags: `--llm_no`, `--quiet`,
+  `--raw`, `--no-stream`. Reuses `gatui.py`'s `clean()` and queue-drain
+  pattern. #260429-21
 - `gatui.py` — terminal (TUI) frontend reusing the same agent backend; raw-mode
   line reader with ESC-to-clear, UTF-8/CJK aware, Ctrl-C aborts current turn,
   Ctrl-D exits. Falls back to plain `input()` on Windows / non-TTY. #260429-21
