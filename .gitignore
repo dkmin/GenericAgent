@@ -96,8 +96,6 @@ sche_tasks/
 # CDP Bridge 密钥配置（首次运行自动生成）
 assets/tmwd_cdp_bridge/config.js
 assets/copilot_proxy.pyw
-**log.*
-!CHANGELOG.md
 
 # Reflect (ignore new files, whitelist existing)
 reflect/*
@@ -107,4 +105,3 @@ reflect/*
 # Universal: never track __pycache__ anywhere
 **/__pycache__/
 self-gen-agent-memory-ko.html
-!docs/mint/resources/changelog.mdx
