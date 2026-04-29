@@ -1,0 +1,118 @@
+---
+title: "나만의 SOP 작성하기"
+description: "memory/*_sop.md 패턴을 따라, 같은 패턴이 3회 반복될 때 SOP를 만들어 에이전트의 장기 기억으로 승격시킵니다."
+sidebarTitle: "Write Your SOP"
+icon: "book-open"
+---
+
+<Note>이 문서는 GenericAgent에서 가장 중요한 가이드입니다. 도구를 늘리는 대신 **SOP를 늘리는 것**이 자가진화 에이전트의 핵심 메커니즘이기 때문입니다.</Note>
+
+## 언제 SOP를 만드는가
+
+<Tip>**3회 규칙** — 같은 절차를 3번 손으로 시켰다면 SOP로 만듭니다. 1–2회까지는 임시 작업, 3회부터는 패턴입니다.</Tip>
+
+좋은 후보 시그널:
+
+- 같은 함정에 같은 방식으로 빠진다 (예: 잘못된 경로, 잊는 검증 단계)
+- 매번 비슷한 도구 조합을 같은 순서로 호출한다
+- 결과 품질이 라운드마다 들쭉날쭉하다 — 즉, 프로토콜이 없다
+- 사용자가 매번 같은 피드백을 준다 ("먼저 X부터 해", "Y는 절대 하지 마")
+
+만들지 않아야 할 후보:
+
+- 한 번 실행하고 끝날 일회성 작업
+- "참고용" 지식 문서 (SOP는 행동 규약이지 매뉴얼이 아닙니다)
+- 너무 추상적이어서 트리거를 정의할 수 없는 것
+
+## 표준 패턴
+
+`memory/` 아래의 SOP 파일들(`plan_sop.md`, `verify_sop.md`, `autonomous_operation_sop.md`, `scheduled_task_sop.md` 등)은 모두 다음 4요소를 가집니다.
+
+<Steps>
+  <Step title="트리거와 금지 — 첫 1–2줄">
+    예: `**트리거**: 3단계 이상 의존성 / 다중 파일 협업 / 조건 분기 / 병렬 필요 | **금지**: 1-2단계 단순 작업은 바로 처리`
+
+    트리거가 모호하면 SOP는 절대 호출되지 않습니다. 금지 조건을 함께 적어 오작동을 막습니다.
+  </Step>
+  <Step title="핵심 원칙 — 3–5개의 ⛔ 하드 룰">
+    각 룰은 위반 시 즉각 망가지는 한 줄. "메인 agent 가 환경 탐색을 직접 수행 금지" 처럼 행동 단위로 적습니다.
+  </Step>
+  <Step title="절차 — 번호 매긴 Step">
+    각 Step에 (1) 입력 (2) 도구 호출 (3) 산출 형식이 명시돼야 합니다. "잘 검토한다" 같은 추상어 금지.
+  </Step>
+  <Step title="실패 처리와 마무리">
+    재시도 횟수, 폴백 분기, 검증 게이트를 명시. 마무리에서 "다음 회차로 넘길 것"을 분리해 적습니다.
+  </Step>
+</Steps>
+
+<Warning>**Markdown frontmatter는 쓰지 마세요.** `memory/` 아래 실제 SOP 파일들은 frontmatter 없이 `# 제목` 으로 시작합니다. 에이전트가 file_read로 읽을 때 noise만 늘어납니다.</Warning>
+
+## 좋은 SOP vs 나쁜 SOP
+
+<Tabs>
+  <Tab title="좋은 SOP">
+    ```markdown
+    # Verify SOP
+
+    **트리거**: plan 모드 종료 직전 / 비가역 조작 후 / 외부에 발신 전
+    **금지**: 메인 agent 가 자기 작업을 직접 검증 (확증 편향)
+
+    ## 핵심 원칙
+    ⛔ 검증 subagent 는 독립적으로, 적대적으로
+    ⛔ 모든 PASS 항목에 도구 호출 증거 필요 (서술 금지)
+    ⛔ VERDICT 줄 (`PASS/FAIL/PARTIAL`) 없는 result.md 는 무효
+
+    ## Step 1: task_type 판정
+    code | data | browser | file | system 중 1개 선택
+    ...
+    ```
+
+    - 트리거·금지가 첫 줄에
+    - 하드 룰이 행동 단위
+    - 출력 포맷 명시 (`VERDICT: ...`)
+  </Tab>
+  <Tab title="나쁜 SOP">
+    ```markdown
+    ---
+    title: 검증 가이드
+    author: dk
+    ---
+
+    # 검증 방법
+
+    검증은 매우 중요합니다. 작업이 끝났을 때 잘 점검해 주세요.
+    상황에 따라 다양한 방법을 사용할 수 있습니다.
+
+    1. 결과를 본다
+    2. 문제가 있는지 확인한다
+    3. 필요하면 다시 한다
+    ```
+
+    - frontmatter (불필요)
+    - 트리거 없음 → 호출 안 됨
+    - "잘 점검", "필요하면" 같은 추상어
+    - 도구·산출물 명시 없음
+  </Tab>
+</Tabs>
+
+## 작성 순서
+
+<Steps>
+  <Step title="3회 패턴 캡처">
+    같은 작업을 3번 한 history를 모읍니다. 공통 단계와 매번 다른 단계를 분리합니다.
+  </Step>
+  <Step title="memory/<name>_sop.md 생성">
+    파일명은 `<도메인>_sop.md` 컨벤션. 예: `procmem_scanner_sop.md`, `tmwebdriver_sop.md`.
+  </Step>
+  <Step title="트리거 → 금지 → 원칙 → Step → 실패 → 마무리 순으로 작성">
+    위의 좋은 SOP 예시를 그대로 따르세요.
+  </Step>
+  <Step title="L1 Insight 인덱스에 한 줄 등록">
+    `memory/global_mem_insight.txt` 같은 인덱스 파일에 `<sop명> | 1줄 요약 | 트리거 키워드`를 추가하면 메인 agent가 매칭에 활용합니다.
+  </Step>
+  <Step title="다음 같은 패턴에서 검증">
+    실제로 호출되는지, 호출돼도 모호한 부분이 있는지를 보고 한 번 더 다듬습니다.
+  </Step>
+</Steps>
+
+<Tip>SOP는 살아있는 문서입니다. 실패 케이스가 발견될 때마다 해당 SOP의 "금지" 섹션을 늘리는 것이 가장 빠른 학습 루프입니다.</Tip>

@@ -1,0 +1,74 @@
+---
+title: "Streamlit 데스크톱 UI"
+sidebarTitle: "Streamlit"
+description: "기본 프론트엔드 — pywebview 창 안에서 Streamlit 채팅 UI를 띄웁니다."
+icon: "browser"
+---
+
+`launch.pyw` 가 실행하는 기본 UI입니다. 내부적으로 [`frontends/stapp.py`](https://github.com/dkmin/GenericAgent/blob/main/frontends/stapp.py) 를 `streamlit run` 으로 띄우고, pywebview 창에 그 URL을 로드합니다.
+
+## 진입 명령
+
+```bash
+python launch.pyw                 # 기본 — Streamlit + pywebview 데스크톱 창
+streamlit run frontends/stapp.py  # pywebview 없이 브라우저로 직접
+```
+
+`launch.pyw` 는 18501–18599 사이에서 빈 포트를 자동으로 잡고, 윈도우는 화면 우측 상단에 600x900 으로 띄웁니다.
+
+## 필수 설정
+
+`mykey.py` 에 LLM 세션이 최소 1개 있어야 합니다. 없으면 사이드바에 "사용 가능한 LLM 연결이 없습니다" 경고가 뜨고 종료합니다.
+
+```python
+# mykey.py
+native_claude_config = { 'name': 'claude', 'apikey': 'sk-ant-...', ... }
+```
+
+## 주요 기능
+
+- **백업 라인 전환** — 사이드바 드롭다운으로 `mykey.py` 의 모든 세션을 선택해 즉시 교체합니다 (`agent.next_llm`).
+- **유휴 자율 행동** — 30분간 응답이 없으면 `[AUTO]` 프롬프트를 자동 주입해 자율 SOP를 실행합니다 (`launch.pyw:idle_monitor`).
+- **`/new`, `/continue N`** — 대화 리셋과 과거 세션 복원 (`continue_cmd.py` 위임).
+- **턴 폴딩** — `LLM Running (Turn N) ...` 마커마다 `<summary>` 한 줄을 제목으로 접어 보여줍니다.
+- **데스크톱 펫 토글** — 사이드바 버튼으로 `desktop_pet_v2.pyw` 를 띄우고 턴 종료 훅을 등록합니다.
+
+## 채팅 명령 (전체)
+
+| 명령 | 동작 | 출처 |
+|---|---|---|
+| `/help` | 명령어 목록 표시 | `chatapp_common.py:266` |
+| `/status` | LLM·실행 상태 조회 | `chatapp_common.py` |
+| `/stop` (또는 `/abort`) | 현재 작업 강제 중지 | `chatapp_common.py:268` |
+| `/new` | 새 대화 시작 + 컨텍스트 초기화 | `stapp.py:199`, `continue_cmd.py:148` |
+| `/restore` | 직전 대화 이력 복원 | `chatapp_common.py:289` |
+| `/continue` | 복원 가능한 과거 세션 리스트 | `continue_cmd.py:268` |
+| `/continue N` | N번 세션 이어서 진행 | `continue_cmd.py:274` |
+| `/llm` | 사용 가능한 LLM 목록 표시 | `chatapp_common.py:277` |
+| `/llm N` | N번째 LLM으로 전환 | `chatapp_common.py:285` |
+| `/session.<attr>=<val>` | 런타임 백엔드 속성 즉시 변경 ([`runtime-overrides`](/reference/runtime-overrides) 참고) | `agentmain.py:114` |
+
+### `/session.` 런타임 오버라이드 예
+
+```text
+/session.reasoning_effort=high
+/session.thinking_type=adaptive
+/session.temperature=0.3
+/session.read_timeout=300
+/session.max_retries=5
+```
+
+`mykey.py`의 `native_oai_config` / `native_claude_config` 키 전부가 대상입니다. 즉시 반영되며 재시작 불필요합니다.
+
+## 관련 로컬 URL
+
+| URL | 용도 |
+|---|---|
+| `http://localhost:185xx` | Streamlit Cowork UI (`launch.pyw` 자동 할당, 18501–18599) |
+| `http://127.0.0.1:41983` | 데스크탑 펫 HTTP (`?state=walk\|idle`, `?msg=...`) |
+| `http://127.0.0.1:19528~19531` | WeChat/QQ/WeCom/DingTalk 단일 인스턴스 락 포트 |
+
+```bash
+curl 'http://127.0.0.1:41983/?state=walk'
+curl 'http://127.0.0.1:41983/?msg=Turn%201%20done'
+```

@@ -1,0 +1,43 @@
+---
+title: "데스크톱 펫"
+sidebarTitle: "Desktop Pet"
+description: "화면 위를 걷는 투명 펫 — 에이전트의 현재 상태를 시각화합니다."
+icon: "cat"
+---
+
+[`frontends/desktop_pet_v2.pyw`](https://github.com/dkmin/GenericAgent/blob/main/frontends/desktop_pet_v2.pyw) 는 스킨(sprite sheet) 시스템을 갖춘 투명 데스크톱 펫입니다. macOS는 순수 Cocoa, Windows는 별도 백엔드로 진정한 투명창을 구현합니다.
+
+## 진입 명령
+
+```bash
+python frontends/desktop_pet_v2.pyw       # 단독 실행
+```
+
+또는 Streamlit 사이드바의 **"🐱 데스크탑 펫"** 버튼을 누르면 `stapp.py:60-79` 가 펫을 띄우고 `_turn_end_hooks['pet']` 을 등록해 매 턴 마지막에 상태를 갱신합니다.
+
+## 필수 설정
+
+별도 mykey 변수는 필요 없습니다. 스킨은 `frontends/skins/<name>/skin.json` 으로 자동 감지됩니다.
+
+```text
+frontends/skins/<skin>/skin.json     # animations 필드 필수
+```
+
+## HTTP 제어 인터페이스
+
+펫은 `127.0.0.1:41983` 에서 HTTP 서버를 띄웁니다 (`PORT = 41983`).
+
+```bash
+curl 'http://127.0.0.1:41983/?state=walk'           # 상태 변경
+curl 'http://127.0.0.1:41983/?state=idle'           # idle/walk/run/sprint
+curl 'http://127.0.0.1:41983/?msg=hello'            # 말풍선 표시
+curl -X POST -d 'hello' http://127.0.0.1:41983/     # POST 본문도 말풍선
+```
+
+## 주요 기능
+
+- **스프라이트 시트 애니메이션** — `frameWidth`/`frameHeight`/`frameCount`/`columns` 지정으로 시트에서 프레임 추출.
+- **다중 상태** — `idle` / `walk` / `run` / `sprint`.
+- **말풍선 토스트** — `?msg=` 또는 POST 본문으로 메시지 표시, 한자/한글 폰트 자동 탐색.
+- **에이전트 연동 훅** — Streamlit 사이드바가 turn 종료 시 `Turn N + <summary>` 텍스트와 `state=idle` 을 자동 전송.
+- **포트 충돌 감지** — 41983 사용 중이면 경고 후 동작 종료.

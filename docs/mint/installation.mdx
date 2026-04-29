@@ -1,0 +1,46 @@
+---
+title: "GenericAgent 설치"
+description: "macOS / Windows / Linux 환경별 의존성 설치와 검증."
+sidebarTitle: "Installation"
+icon: "download"
+---
+
+<Info>Python **3.10 이상** 필요. Streamlit UI 사용 시 GUI 환경 또는 원격 브라우저 접근이 필요합니다.</Info>
+
+## 공통
+
+```bash
+git clone https://github.com/dkmin/GenericAgent.git
+cd GenericAgent
+pip install -r requirements.txt
+```
+
+## macOS
+
+추가 도우미 스크립트가 포함되어 있습니다.
+
+```bash
+bash assets/install-macos-app.sh
+```
+
+권한 안내가 뜨면 **화면 기록** · **접근성** 두 가지를 모두 허용하세요. 마우스/키보드 atomic tool과 Vision atomic tool이 작동하려면 필수입니다.
+
+## Windows
+
+```bat
+assets\install_python_windows.bat
+```
+
+ADB 모바일 자동화를 쓰려면 [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools)도 PATH에 추가합니다.
+
+## Linux (실험적)
+
+브라우저·키보드 도구는 X11/Wayland에서만 작동합니다. 헤드리스 서버는 Streamlit UI + 봇 프론트엔드만 권장합니다.
+
+## 검증
+
+```bash
+python agentmain.py --help
+```
+
+LLM 미설정 에러가 뜨면 정상입니다 — 다음 단계 [Configure LLM](/configure-llm)으로 진행하세요.

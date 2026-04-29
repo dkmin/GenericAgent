@@ -1,0 +1,34 @@
+---
+title: "Feishu (피쉬) 봇"
+sidebarTitle: "Feishu"
+description: "lark-oapi 기반 비동기 Feishu/Lark 봇."
+icon: "comment"
+---
+
+[`frontends/fsapp.py`](https://github.com/dkmin/GenericAgent/blob/main/frontends/fsapp.py) 는 `lark-oapi` 의 WebSocket 클라이언트를 사용합니다.
+
+## 진입 명령
+
+```bash
+python launch.pyw --feishu        # 또는 --fs
+python frontends/fsapp.py
+```
+
+## 필수 설정
+
+```python
+# mykey.py
+fs_app_id        = 'cli_...'
+fs_app_secret    = '...'
+fs_allowed_users = []           # open_id 또는 union_id
+```
+
+설정 누락 시: `"错误: 请在 mykey.py 或 mykey.json 中配置 fs_app_id 和 fs_app_secret"` 출력 후 종료 (`fsapp.py:643`).
+
+## 주요 기능
+
+- **장기 연결(Long-connection)** — `lark.ws.Client` 로 이벤트 수신, HTTP 웹훅 불필요.
+- **p2 메시지 핸들러** — `register_p2_im_message_receive_v1` 로 1대1 메시지 처리.
+- **`/continue`, `/new` 명령** — `chatapp_common`, `continue_cmd` 의 공통 핸들러 위임.
+- **턴 종료 훅 키** — `fs_<open_id>` 네임스페이스로 등록.
+- **잘린 응답 표기** — silent fallback 대신 truncated tail 표시 (db6bf00 커밋).

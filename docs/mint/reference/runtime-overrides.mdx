@@ -1,0 +1,71 @@
+---
+title: "런타임 오버라이드"
+sidebarTitle: "Runtime Overrides"
+description: "/session.<attr>=<val> — REPL/UI에서 LLM 백엔드 속성을 즉시 바꿉니다."
+icon: "sliders"
+---
+
+REPL이나 모든 채팅 프론트엔드에서 메시지를 `/session.` 으로 시작하면 `agentmain.py:_handle_slash_cmd` 가 가로채 현재 `llmclient.backend` 의 속성을 즉시 변경합니다.
+
+## 문법
+
+```text
+/session.<attribute>=<value>
+```
+
+`<value>` 는 다음 순서로 해석됩니다.
+
+1. `temp/<value>` 파일이 존재하면 그 파일 내용 (utf-8) 사용.
+2. 그 외엔 `json.loads()` 시도 (숫자/불리언/리스트/객체 파싱).
+3. 둘 다 실패하면 문자열 그대로.
+
+## mykey_template_en.py 가 알려주는 예
+
+```text
+/session.reasoning_effort=high
+/session.thinking_type=adaptive
+/session.temperature=0.3
+```
+
+## 자주 쓰는 속성
+
+| 속성 | 타입 | 효과 |
+|---|---|---|
+| `reasoning_effort` | enum | `none` / `minimal` / `low` / `medium` / `high` / `xhigh`. OpenAI/Claude 추론 깊이. |
+| `thinking_type` | enum | `adaptive` / `enabled` / `disabled` (Claude). |
+| `thinking_budget_tokens` | int | `thinking_type='enabled'` 일 때 토큰 예산. |
+| `temperature` | float | 1.0 이외면 페이로드에 포함. |
+| `max_tokens` | int | 최대 출력 토큰. |
+| `service_tier` | enum | `auto` / `default` / `priority` / `flex`. |
+| `read_timeout` | int | HTTP 응답 타임아웃 (초). |
+| `extra_sys_prompt` | string | 매 턴 시스템 프롬프트 끝에 추가됨 (`agentmain.py:138`). |
+| `system` | string | (Mixin은 브로드캐스트) |
+
+## 동작 확인
+
+명령 처리 후 시스템 메시지로 다음과 같이 회신합니다.
+
+```text
+✅ session.reasoning_effort = 'high'
+```
+
+## 코드 예
+
+```python
+# 동등한 파이썬 호출
+agent.llmclient.backend.reasoning_effort = 'high'
+```
+
+## 긴 값을 파일로
+
+긴 시스템 프롬프트나 다중행 값은 `temp/` 에 저장한 뒤 파일명만 지정합니다.
+
+```bash
+echo "당신은 한국어로만 답합니다." > temp/sys_ko.txt
+# REPL에서:
+/session.extra_sys_prompt=sys_ko.txt
+```
+
+## MixinSession 주의
+
+Mixin 백엔드의 경우 `system`, `tools`, `temperature`, `max_tokens`, `reasoning_effort`, `history` 만 모든 하위 세션에 자동 브로드캐스트됩니다 (`llmcore.py:_BROADCAST_ATTRS`). 다른 속성은 `_sessions[0]` 에만 적용됩니다.

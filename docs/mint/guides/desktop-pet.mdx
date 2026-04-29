@@ -1,0 +1,62 @@
+---
+title: "데스크탑 펫 띄우기"
+description: "에이전트가 실행 중인지를 화면 위에서 보여주는 작은 데스크탑 펫을 41983 포트로 제어합니다."
+sidebarTitle: "Desktop Pet"
+icon: "cat"
+---
+
+<Note>데스크탑 펫은 `frontends/desktop_pet_v2.pyw`(우선) 또는 `frontends/desktop_pet.pyw`로 실행되는 별도 GUI 프로세스입니다. HTTP 서버를 `127.0.0.1:41983`에 띄워두고, 메인 에이전트는 GET 쿼리로 상태와 메시지를 갱신합니다.</Note>
+
+## 띄우는 방법
+
+<Tabs>
+  <Tab title="UI 버튼">
+    `launch.pyw`로 Streamlit UI를 띄운 뒤 사이드바의 **🐱 데스크탑 펫** 버튼을 누릅니다. `stapp.py`가 다음을 자동으로 처리합니다.
+
+    1. `desktop_pet_v2.pyw`를 subprocess로 기동 (없으면 `desktop_pet.pyw` 폴백)
+    2. `agent._pet_req(query)` 헬퍼 등록 — 백그라운드 스레드로 `urlopen('http://127.0.0.1:41983/?...')` 호출
+    3. `agent._turn_end_hooks['pet']`에 `_pet_hook` 등록
+  </Tab>
+  <Tab title="단독 실행">
+    Streamlit 없이도 펫 GUI만 띄울 수 있습니다.
+
+    ```bash
+    python frontends/desktop_pet_v2.pyw
+    # 또는
+    python frontends/desktop_pet.pyw
+    ```
+
+    이후 다른 프로세스에서 HTTP로 상태를 갱신합니다.
+  </Tab>
+</Tabs>
+
+## 41983 포트 프로토콜
+
+펫 서버는 단순 GET 쿼리로 두 가지 명령을 받습니다.
+
+```bash
+curl 'http://127.0.0.1:41983/?state=walk'
+curl 'http://127.0.0.1:41983/?state=idle'
+curl 'http://127.0.0.1:41983/?msg=hello'
+```
+
+`desktop_pet_v2.pyw` 응답 메시지에 따르면 `state`는 `idle / walk / run / sprint` 4단계, `msg`는 말풍선에 노출됩니다.
+
+## turn_end_hook 연동
+
+`stapp.py`가 등록하는 hook은 다음과 같이 동작합니다 (요약).
+
+```python
+def _pet_hook(ctx):
+    parts = [f"Turn {ctx.get('turn','?')}"]
+    if ctx.get('summary'):     parts.append(ctx['summary'])
+    if ctx.get('exit_reason'): parts.append('작업이 완료되었습니다')
+    _pet_req(f'msg={quote(chr(10).join(parts))}')
+    if ctx.get('exit_reason'): _pet_req('state=idle')
+```
+
+또한 사용자가 새 프롬프트를 전송하면 `_pet_req('state=walk')`로 즉시 걷는 상태로 전환합니다(슬래시 명령은 제외).
+
+<Tip>나만의 hook이 필요하면 `agent._turn_end_hooks['key'] = fn` 으로 등록하면 됩니다. `ctx`에는 최소한 `turn`, `summary`, `exit_reason`이 들어옵니다.</Tip>
+
+<Warning>41983 포트가 이미 사용 중이면 펫 서버 기동이 실패합니다. 다른 프로세스가 점유 중인지 확인하거나 펫 스크립트의 `PORT` 상수를 임시로 변경하세요.</Warning>

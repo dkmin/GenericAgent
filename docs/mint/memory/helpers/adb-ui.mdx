@@ -1,0 +1,69 @@
+---
+title: "adb_ui.py — Android UI"
+sidebarTitle: "adb_ui"
+description: "Android UI 한 번에 dump+파싱 (u2 우선, native fallback)"
+icon: "mobile-screen"
+---
+
+## 언제 쓰는가
+Android 앱의 UI 자동화. 특히 美团/淘宝 같이 애니메이션 많은 앱은 native uiautomator의 idle 제약을 자주 위반.
+
+## 작동 원리 (Why)
+- **u2 (uiautomator2)** 는 idle 제약 안 받음 → 애니메이션 밀집 앱에 유리
+- 네이티브 `uiautomator dump`는 idle 상태 필요 → fallback
+- 한 번 호출로 dump + XML 파싱 + 좌표 계산까지
+
+## 사용 예시
+
+```python
+import sys
+sys.path.append("../memory")
+from adb_ui import ui, tap
+
+# 모든 보이는 노드 출력
+ui()
+
+# 키워드 필터링
+ui(keyword="확인")
+
+# 클릭 가능 노드만
+ui(clickable_only=True)
+
+# 원본 노드 리스트 반환 (raw=True)
+nodes = ui(raw=True)
+
+# 탭
+tap(540, 1200)
+```
+
+출력 형식:
+```
+[Y] 확인  (540,1200)        # Y=clickable, E=editable
+[E] <password_field>  (...)  # text 없으면 resource-id/class 표시
+total: 42 nodes
+```
+
+## 알려진 함정
+
+- **Termux 패키지 자동 제외**: `pkg`에 "termux" 포함 시 무시 (자기 자신 노이즈 회피)
+- **bounds 파싱**: `[x1,y1][x2,y2]` 정규식 → 중심 좌표 자동 계산 (`cx, cy`)
+- **빈 텍스트 처리**: text/desc 둘 다 비어 있고 clickable도 아니면 raw=False일 때 자동 제외
+
+## 알려진 패키지명
+
+| 앱 | 패키지명 |
+|---|---|
+| 美团外卖 | `com.sankuai.meituan.takeoutnew` |
+| 淘宝 | `com.taobao.taobao` |
+
+## 자주 빠지는 함정
+
+<Warning>
+- **u2 미설치 시**: `uiautomator2` import 실패 → 자동 native fallback. native가 idle 제약으로 실패하면 dump 자체가 비는 경우 있음
+- **팝업 검출**: `ui(clickable_only=True, raw=True)`로 전체 화면 FrameLayout + 하단 작은 ImageView (X 닫기 버튼) 패턴 찾기
+- **dump 실패 시 stdout/stderr 모두 점검**: `subprocess` 결과의 두 스트림 어느 쪽에든 "dumped" 들어 있으면 OK
+</Warning>
+
+## 관련
+- [Helpers Overview](/memory/helpers/overview)
+- [OCR/UI Detect](/memory/helpers/ocr-ui-detect) (스크린샷 기반 대안)

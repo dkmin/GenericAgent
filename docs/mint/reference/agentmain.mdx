@@ -1,0 +1,71 @@
+---
+title: "GeneraticAgent 클래스"
+sidebarTitle: "agentmain"
+description: "에이전트 코어 — 작업 큐, LLM 라우팅, 슬래시 명령."
+icon: "robot"
+---
+
+[`agentmain.py`](https://github.com/dkmin/GenericAgent/blob/main/agentmain.py) 의 `GeneraticAgent` 클래스는 모든 프론트엔드의 단일 진입점입니다.
+
+## 시그니처
+
+```python
+class GeneraticAgent:
+    def __init__(self) -> None
+    def run(self) -> None                                      # 워커 루프 (블로킹)
+    def put_task(self, query, source="user", images=None)      # → display_queue
+    def abort(self) -> None                                    # 현재 작업 중지
+
+    def load_llm_sessions(self) -> None                        # mykey 다시 로드
+    def next_llm(self, n=-1) -> None                           # LLM 전환 (n=-1: 다음)
+    def list_llms(self) -> list[(idx, name, is_current)]
+    def get_llm_name(self, b=None, model=False) -> str
+```
+
+## 핵심 속성
+
+| 속성 | 의미 |
+|---|---|
+| `llmclient` | 현재 활성 `ToolClient` / `NativeToolClient`. `.backend` 가 세션. |
+| `llmclients` | `mykey.py` 에서 발견된 모든 클라이언트 리스트. |
+| `llm_no` | 현재 인덱스. |
+| `history` | `[USER]:` / `[Agent]:` 한 줄 요약 누적. |
+| `task_queue` | `queue.Queue` — 외부에서 `put_task` 로 적재. |
+| `is_running`, `stop_sig` | 실행 상태/중단 신호. |
+| `verbose`, `inc_out` | 출력 모드 (CLI는 `inc_out=True`). |
+
+## 슬래시 명령
+
+`_handle_slash_cmd` 가 사용자 입력에서 가로채는 명령:
+
+| 명령 | 동작 |
+|---|---|
+| `/session.<attr>=<val>` | `self.llmclient.backend` 의 `<attr>` 를 `<val>` 로 즉시 변경. JSON 파싱 시도, 또는 `temp/<val>` 파일 경로면 그 내용을 사용. |
+| `/resume` | `temp/model_responses/` 의 최근 10개 세션 파일을 요약해 사용자에게 선택지로 제시 (특수 prompt 반환). |
+
+## 사용 예
+
+```python
+from agentmain import GeneraticAgent
+import threading
+
+agent = GeneraticAgent()
+threading.Thread(target=agent.run, daemon=True).start()
+
+dq = agent.put_task("hello, what's 2+2?", source="user")
+while True:
+    item = dq.get()
+    if 'next' in item: print(item['next'], end='')
+    if 'done' in item: print(); break
+```
+
+## CLI 진입점
+
+```bash
+python agentmain.py                               # 인터랙티브 REPL
+python agentmain.py --task <iodir> --input "..."  # 일회성 파일 IO 모드
+python agentmain.py --reflect <script.py>         # 반사 모드 — check() 가 task 반환 시 실행
+python agentmain.py --bg ...                      # popen 후 PID 출력하고 종료
+```
+
+`--reflect` 스크립트는 `check()` 함수와 선택적으로 `INTERVAL`, `ONCE`, `on_done(result)` 를 정의합니다 (`reflect/scheduler.py` 참고).

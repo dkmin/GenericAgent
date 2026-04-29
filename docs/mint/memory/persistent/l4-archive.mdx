@@ -1,0 +1,58 @@
+---
+title: "L4 — L4_raw_sessions/"
+sidebarTitle: "L4 Archive"
+description: "scheduler reflect가 자동 수집하는 압축 세션 로그 — 과거 컨텍스트 추적"
+icon: "box-archive"
+---
+
+## 언제 쓰는가
+"이전에 비슷한 작업을 어떻게 했더라?"를 추적해야 할 때. 또는 reflect가 자동으로 메모리 갱신을 위해 과거 세션을 분석할 때.
+
+## 작동 원리 (Why)
+L1/L2/L3는 **압축된 결론**입니다. 어디서 그 결론이 나왔는지 흔적이 사라지면, 잘못된 일반화나 오래된 함정 지침을 못 잡습니다. L4는 **압축된 원본 세션 로그**를 보존해 추적 가능성을 유지.
+
+## 디렉터리 구조
+
+```
+memory/L4_raw_sessions/
+├── compress_session.py          # 압축 로직
+├── 0403_2013-0403_2245.txt      # 압축된 세션
+├── 0405_0900-0405_1130.txt
+└── ...
+```
+
+파일명 형식: `MMDD_HHMM-MMDD_HHMM.txt` — 세션 시작/종료 시각.
+
+## 압축 로직 (compress_session.py)
+
+원본 `model_responses_xxx.txt`를 두 가지 포맷으로 인식:
+- **Format A (JSON)**: `=== Prompt === ts` 다음에 JSON → 그대로 보존
+- **Format B (Raw)**: 시스템 프롬프트와 assistant echo 제거
+
+마커 인식:
+- `=== Prompt === ts`
+- `=== Response === ts`
+- `=== USER ===`
+- `=== ASSISTANT ===`
+
+타임스탬프 변환: `2026-04-03 20:13:06` → `0403_2013`
+
+## 자동 수집
+
+scheduler가 reflect 모드로 돌면서 종료된 세션 로그를 발견하면 자동으로:
+1. `compress_session(src)` 호출
+2. `MMDD_HHMM-MMDD_HHMM.txt`로 dst_dir에 저장
+3. 원본 정리 (선택)
+
+## 자주 빠지는 함정
+
+<Warning>
+- **L4는 raw archive — 직접 컨텍스트에 로드 금지**. 토큰 폭탄. 검색이 필요할 때만 grep/file_read로 해당 부분만.
+- **타임스탬프 누락 세션**: Prompt timestamps 못 찾으면 Response timestamps로 fallback. 둘 다 없으면 압축 결과 `(None, reason)` 반환
+- **포맷 자동 감지**: 첫 Prompt 이후 `{` 시작이면 Format A, 아니면 Format B. 혼합 포맷은 미지원
+</Warning>
+
+## 관련
+- [Memory Management SOP](/memory/sops/memory-management)
+- [Scheduled Task SOP](/memory/sops/scheduled-task) (reflect 호출)
+- [L0~L4 계층 도식](/memory/l0-l4-layers)

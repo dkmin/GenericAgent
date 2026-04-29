@@ -1,0 +1,72 @@
+---
+title: "TMWebDriver"
+sidebarTitle: "TMWebDriver"
+description: "Tampermonkey 유저스크립트와 WebSocket으로 통신하는 실제 브라우저 드라이버."
+icon: "browser"
+---
+
+[`TMWebDriver.py`](https://github.com/dkmin/GenericAgent/blob/main/TMWebDriver.py) 는 사용자의 **로그인 세션이 살아있는 진짜 브라우저**에 JS를 주입합니다. headless가 아닙니다.
+
+## 아키텍처
+
+```
+브라우저 탭 (Tampermonkey 스크립트)
+   ↕ WebSocket  ws://127.0.0.1:18765
+TMWebDriver 마스터  ←→  bottle HTTP /link  (port 18766)
+                       ↑
+            다른 GA 인스턴스 (`is_remote=True`)가 여기로 연결
+```
+
+## 핵심 메서드
+
+```python
+class TMWebDriver:
+    def __init__(self, host='127.0.0.1', port=18765)
+
+    # JS 실행 — 메인 API
+    def execute_js(self, code, timeout=15, session_id=None) -> dict
+        # → {'data': result, 'newTabs': [...]}
+
+    # 세션 관리
+    def get_all_sessions(self) -> list[dict]      # 활성 탭 [{id, url, title, type}]
+    def get_session_dict(self) -> dict[id, url]
+    def find_session(self, url_pattern) -> list   # url 부분 일치
+    def set_session(self, url_pattern) -> str     # default_session_id 갱신
+
+    # 네비게이션
+    def jump(self, url, timeout=10)               # location.href 변경
+    def newtab(self, url=None)                    # GM_openInTab
+```
+
+## ga.py 의 두 어댑터
+
+```python
+web_scan(tabs_only=False, switch_tab_id=None, text_only=False)
+web_execute_js(script, switch_tab_id=None, no_monitor=False)
+```
+
+이들은 도구 호출에서 직접 사용됩니다 (`tools_schema.json` 의 `web_scan`, `web_execute_js`).
+
+## 세션 타입
+
+| 타입 | 설명 |
+|---|---|
+| `ws` | Tampermonkey 유저스크립트가 직접 WS 연결. |
+| `ext_ws` | 브라우저 확장이 WS로 다중 탭 관리. |
+| `http` | 폴백 long-poll HTTP — 60초 비활성이면 자동 disconnected. |
+
+## 분산 모드
+
+다른 GenericAgent 인스턴스에서 마스터에 접속하려면, 같은 host:port 로 `TMWebDriver()` 를 만들면 자동으로 `is_remote=True` 로 감지하고 모든 호출을 `/link` HTTP 엔드포인트로 위임합니다.
+
+## 예시
+
+```python
+from TMWebDriver import TMWebDriver
+driver = TMWebDriver()
+driver.set_session('youtube.com')
+result = driver.execute_js('return document.title')
+print(result['data'])
+```
+
+자세한 SOP는 [`memory/sops/tmwebdriver`](/memory/sops/tmwebdriver) 참고.

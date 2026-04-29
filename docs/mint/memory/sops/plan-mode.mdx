@@ -1,0 +1,86 @@
+---
+title: "Plan Mode SOP"
+sidebarTitle: "Plan Mode"
+description: "다단계 작업을 탐색→계획→실행→검증 4단계로 분해, 메인 컨텍스트 보존"
+icon: "list-check"
+---
+
+## 언제 쓰는가
+3단계 이상 의존성, 다중 파일 협업, 조건 분기, 병렬 필요 작업. 1-2단계 단순 작업은 바로 처리.
+
+## 작동 원리 (Why)
+메인 agent의 컨텍스트는 가장 희소한 자원. 탐색의 긴 출력이 계획 실행 공간을 차지하면 작업 후반에 토큰 부족으로 실패합니다. **탐색은 subagent에 위임**, 메인은 디렉터리 생성·SOP 매칭·결론 읽기만.
+
+## 4단계 흐름
+
+### 1. 탐색 단계
+- `mkdir plan_XXX/` 생성
+- 탐색 subagent 기동 (`--verbose`로 감독 모드)
+- 출력: `plan_XXX/exploration_findings.md`
+
+### 2. 계획 단계
+도메인 SOP 읽고 `plan.md` 작성. 단계마다 표시:
+- `[ ]` 일반 단계 (메인 직접 실행)
+- `[D]` subagent 위임 (대량 코드/웹/반복)
+- `[P]` 병렬 (Map 모드)
+- `[?]` 조건 분기
+
+### 3. 실행 단계 루프
+1. `file_read(plan.md)` → 첫 `[ ]` 찾기
+2. 단계 SOP 읽기
+3. 실행 + Mini 검증
+4. `file_patch`로 `[ ] → [✓ 결과]`
+5. 즉시 다음 `[ ]`로
+
+### 4. 검증 단계
+모든 `[✓]` 후 **독립 검증 subagent** 강제 기동, `verify_sop.md` 따름. VERDICT: PASS/FAIL/PARTIAL.
+
+## 사용 예시
+
+<CodeGroup>
+```python plan 모드 진입
+code_run({
+  'inline_eval': True,
+  'script': 'handler.enter_plan_mode("./plan_XXX/plan.md")'
+})
+```
+
+```markdown plan.md 골격
+# 작업 제목
+요구사항: 한 줄 | 제약: 핵심 제한
+
+## 탐색 발견
+- 발견1: XXX (출처: file_read)
+- 불확실성: ZZZ
+
+## 실행 계획
+1. [ ] Step 1
+   SOP: xxx_sop.md
+2. [D] Step 2 (subagent 위임)
+   SOP: yyy_sop.md
+   의존: 1
+
+## 검증 체크포인트
+N+1. [ ] **[VERIFY] 독립 검증 subagent 기동**
+     SOP: verify_sop.md
+```
+</CodeGroup>
+
+## 자주 빠지는 함정
+
+<Warning>
+- **메인 agent가 환경 탐색 직접 수행 금지**: 반드시 subagent 위임, 예외 없음.
+- **기억으로 실행 금지**: 새 단계 진행 전 반드시 `file_read(plan.md)`.
+- **검증 단계 건너뛰기 금지**: `[VERIFY]`는 강제이며 "다 끝났으니" 핑계로 스킵 불가.
+- **종료 점검 없이 종료 금지**: 마지막 단계 표시 후 `[ ]` 잔존 0개 확인 필수.
+- **사용자 확인 없이 실행 금지**: ask_user로 plan 확인 후에만 실행 단계 진입.
+</Warning>
+
+<Tip>
+[D] 미표시 단계라도 실행 중 대량 코드 읽기/반복 디버깅 필요 시 능동적으로 subagent 위임 판단.
+</Tip>
+
+## 관련
+- [Subagent SOP](/memory/sops/subagent)
+- [Verify SOP](/memory/sops/verify)
+- [Supervisor SOP](/memory/sops/supervisor)

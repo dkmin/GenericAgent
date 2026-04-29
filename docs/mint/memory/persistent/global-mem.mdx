@@ -1,0 +1,54 @@
+---
+title: "L2 — global_mem.txt"
+sidebarTitle: "global_mem"
+description: "환경 사실 라이브러리 — 경로, 인증정보, 포트, 상수"
+icon: "file-lines"
+---
+
+## 언제 쓰는가
+환경 특이적 사실 (IP, 비표준 경로, ID, API key 위치, 포트 등 LLM이 zero-shot으로 정확히 생성 불가한 정보)을 저장할 때.
+
+## 작동 원리 (Why)
+L1은 **존재성 인덱스**, L3는 **작업 단위 SOP**. 그 사이에 **이 머신의 환경 사실** 계층이 필요합니다 — 다른 머신에선 다른 값이지만, 이 머신에선 매번 같은 값이라 매번 도구 호출로 알아내기엔 비싼 정보.
+
+## 형식
+
+```text
+# [Global Memory - L2]
+
+## [SECTION_NAME]
+key1: value1
+key2: value2
+
+## [ANOTHER_SECTION]
+...
+```
+
+각 항목은 `## [SECTION]`으로 조직된 사실 항목들.
+
+## 동기화
+
+L2 변경 시 **L1의 해당 TOPIC 내비게이션 줄 갱신**, 내비게이션만 가능 (값/방법/단계 옮기기 금지).
+
+## 무엇을 저장할 수 있나
+
+| 종류 | 예시 | 저장 |
+|---|---|---|
+| 경로 | 비표준 설치 경로, 특정 데이터 디렉터리 | ✅ |
+| 인증 정보 위치 | `mykey.py`의 변수명 | ✅ (값은 keychain.py로) |
+| 포트 | 서비스/프록시 포트 번호 | ✅ |
+| 머신 ID | hostname, MAC, 디바이스 ID | ✅ |
+
+## 자주 빠지는 함정
+
+<Warning>
+- **휘발성 상태 저장 금지**: 타임스탬프, PID, 임시 Session ID, 현재 연결된 디바이스 등
+- **추측 저장 금지**: 행동 검증 통과한 것만 (No Execution, No Memory)
+- **LLM이 추론 가능한 일반 상식 저장 엄금**: 예를 들어 "Linux의 PATH 환경변수는 :로 구분" 같은 것
+- **비밀번호/API key 평문 저장 금지**: keychain.py 사용
+</Warning>
+
+## 관련
+- [Memory Management SOP](/memory/sops/memory-management)
+- [L1 — global_mem_insight](/memory/persistent/global-insight)
+- [keychain.py](/memory/helpers/keychain)

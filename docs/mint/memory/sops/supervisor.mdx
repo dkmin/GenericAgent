@@ -1,0 +1,59 @@
+---
+title: "Supervisor SOP"
+sidebarTitle: "Supervisor"
+description: "감독 모드 — 일하지 않는 트집 잡는 감독관, output.txt만 읽고 개입"
+icon: "user-tie"
+---
+
+## 언제 쓰는가
+작업 agent를 기동하고 그 진행을 감독할 때. 메인이 직접 일하지 않고 품질만 보장하는 역할.
+
+## 작동 원리 (Why)
+당신은 **트집 잡는 감독관**이지 일하는 작업자가 아닙니다. 유일한 임무: 작업 agent가 고품질로 작업을 완료하도록 보장. SOP가 있으면 SOP로 제약, 없으면 상식과 경험으로 점검.
+
+## 레드라인
+
+<Warning>
+- **직접 일하기 금지**: 브라우저 조작 안 함, 코드 작성 안 함, 작업 단계 실행 안 함. 오로지 읽기·판단·개입만.
+- **환경 읽기 가능**: file_read / web_scan / web_execute_js / code_run (읽기 전용) 으로 정보 획득.
+</Warning>
+
+## 기동 흐름
+
+1. **SOP 있을 때**: SOP 원문을 읽고 모든 제약(⚠️/금지/필수/형식)을 추출, 단계별 **제약 체크리스트**를 working memory에 저장.
+2. **SOP 없을 때**: 작업 성격과 진행 상황에 따라 향후 핵심 위험을 미리 추정.
+3. **subagent 기동** (cwd = 코드 루트):
+   ```bash
+   python agentmain.py --task {name} --bg --verbose
+   ```
+   input.txt: `{SOP명}으로 {사용자 작업} 완료` (목표만, 단계 복기 안 함)
+
+## 모니터링 루프
+
+`temp/{task_name}/output.txt`의 신규 내용을 폴링, 새 출력마다:
+
+1. 작업 agent가 어느 단계인지 판단, 제약 체크리스트와 대조 (인상으로 판단 금지, 제약 잘 안 떠오르면 SOP 재독)
+2. 환경 정보(파일/웹/프로세스) 읽어 판단 근거 보충
+3. ask_user 시 응답
+
+| 발견 | 개입 |
+|------|------|
+| 단계 건너뜀 | `_intervene`: StepN 건너뛰었습니다, 먼저 하세요 |
+| 디테일 누락 | `_intervene`: XX 제약 빠뜨렸습니다, 보충하세요 |
+| 말만 하고 안 함 | `_intervene`: 말 그만, 바로 하세요 |
+| 근거 없는 단정 | `_intervene`: 어떻게 확인했나요? 검증하세요 |
+| 연속 실패 | `_intervene`: 멈춰요, 에러 로그부터 |
+| 빗나갈 것 같음 | `_intervene`: SOP의 StepN 다시 읽고 진행 |
+| 곧 중후반 단계 진입 | `_keyinfo`: 그 단계의 ⚠️ 디테일 사전 주입 |
+
+## 개입 원칙
+
+<Tip>
+- **침묵이 기본**: 문제 없으면 말하지 않음
+- **한 줄로**: 사용자처럼 직설적으로
+- **`_keyinfo`는 사전 주입 전용**: 도달 전 미리 working memory에 넣어둠. 이미 저지른 실수에는 `_intervene`으로 보정.
+</Tip>
+
+## 관련
+- [Subagent SOP](/memory/sops/subagent)
+- [Plan Mode SOP](/memory/sops/plan-mode)

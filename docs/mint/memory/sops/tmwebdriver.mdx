@@ -1,0 +1,94 @@
+---
+title: "TMWebDriver SOP"
+sidebarTitle: "TMWebDriver"
+description: "Chrome 확장 기반 브라우저 인계 — 로그인 유지, CDP 브리지, autofill 해제"
+icon: "globe"
+---
+
+## 언제 쓰는가
+사용자 브라우저 로그인 상태를 유지하면서 자동화가 필요할 때. Selenium/Playwright 의 깨끗한 세션이 아니라 **사용자 cookie · autofill · 확장 그대로** 쓰고 싶을 때.
+
+## 작동 원리 (Why)
+하부 `../TMWebDriver.py`가 Chrome 확장으로 사용자 브라우저를 인계합니다. atomic tool `web_scan`/`web_execute_js`는 직접 사용. 이 SOP는 **함정만** 기록.
+
+## 공통 특성
+
+- ⚠ `web_execute_js`에서 `await` 사용 시 **명시적 `return`** 필수 — 하부가 async 래핑이라 return 없으면 null 반환
+- ✅ `web_scan`은 동일 출처 iframe 자동 관통; 크로스 도메인은 CDP 또는 postMessage
+
+## isTrusted 제한
+JS 이벤트의 `isTrusted=false` — 민감 조작(파일 업로드/일부 버튼)이 차단될 수 있음. 이런 경우 **CDP 브리지** 우선.
+
+## 핵심 함정 모음
+
+### 파일 업로드
+JS로 `<input type=file>` 채우기 불가. 우선 CDP batch:
+```
+getDocument → querySelector → DOM.setFileInputFiles
+```
+차선: ljqCtrl 물리 클릭.
+
+### Chrome PDF 다운로드
+PDF 링크가 미리보기로 열리고 다운로드 안 됨:
+```js
+fetch('PDF_URL').then(r=>r.blob()).then(b=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download='filename.pdf';
+  a.click();
+});
+```
+동일 출처 또는 CORS 필요.
+
+### Chrome 백그라운드 탭 throttling
+백그라운드 탭의 `setTimeout`은 ≥1분/회로 지연 — 폴링 의존 회피. 일부 SPA는 `Page.bringToFront`로 전면 전환해야 데이터 로드.
+
+### CDP 브리지 ⭐ 우선
+경로: `assets/tmwd_cdp_bridge/`. JSON 문자열을 script로 직접 전달:
+
+```js
+web_execute_js script='{"cmd": "cookies"}'
+web_execute_js script='{"cmd": "tabs"}'
+web_execute_js script='{"cmd": "cdp", "tabId": N, "method": "...", "params": {...}}'
+web_execute_js script='{"cmd": "batch", "commands": [...]}'
+```
+
+**batch 혼합**: `$N.path`로 N번째 결과 필드 참조 (0-indexed). 예: `"nodeId":"$2.root.nodeId"`.
+
+<Warning>
+- batch 선행 명령 실패 시 후속 `$N` 참조가 silent하게 undefined가 됨. 각 항목 ok 상태 점검 필수.
+- CDP 기본 tabId는 sender.tab.id. **크로스 탭은 명시적 tabId** 또는 batch 내 tabs 조회 선행.
+</Warning>
+
+### CDP 클릭 전체 라이프사이클
+일반 클릭은 **3 이벤트 시퀀스**: `mouseMoved → mousePressed → mouseReleased` (50-100ms 간격). mouseMoved 생략 시 hover 의존 컴포넌트(MUI Tooltip 등) 작동 안 함.
+
+iframe 클릭 좌표 합성: `finalX = iframeRect.x + elRect.x`. 크로스 도메인 iframe은 `Page.createIsolatedWorld({frameId})` → `Runtime.evaluate({expression, contextId})`.
+
+### autofill 획득과 로그인
+감지: `data-autofilled="true"`, value가 보호 힌트 (실제 값 아님).
+
+<Tip>
+**원클릭 해제**: bringToFront → mousePressed로 임의 필드 클릭 (Released 불필요, 한 번에 페이지 전체 적용) → 500ms 대기 → input/change 이벤트 보조 → 로그인 클릭.
+</Tip>
+
+⚠ 사전 조건: 반드시 먼저 CDP `Page.bringToFront`로 탭 전면 전환. 백그라운드 탭은 물리 클릭 무효.
+
+## 연결 안 될 때 진단
+
+1. 브라우저 안 켜졌나? — 프로세스 확인, 없으면 정상 URL 열기 (about:blank는 확장 미로딩)
+2. WS 백그라운드 죽었나? — 18766 포트 미수신이면 `from TMWebDriver import TMWebDriver; TMWebDriver()` 수동 기동
+3. 확장 미설치? — Chrome `Secure Preferences`의 `extensions.settings`에서 `tmwd_cdp_bridge` 검색
+4. 모두 정상이지만 안 되면 사용자 협조 요청
+
+## 자주 빠지는 함정
+
+<Warning>
+- 물리 좌표 변환: `physX = (screenX + rect 중심x) * dpr`, `physY = (screenY + chromeH + rect 중심y) * dpr`, `chromeH = outerHeight - innerHeight`
+- `web_scan`이 "사용 가능한 탭 없음" 표시한다고 반드시 확장 미설치 아님 — 브라우저 미실행 또는 blank 페이지일 수도
+- Google 이미지 검색 class 명은 난독화 — 하드코딩 금지, `[role=button]` 사용
+</Warning>
+
+## 관련
+- [Web Setup SOP](/memory/sops/web-setup)
+- [ljqCtrl SOP](/memory/sops/ljqctrl) (CDP 차선책)

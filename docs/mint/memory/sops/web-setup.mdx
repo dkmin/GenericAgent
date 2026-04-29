@@ -1,0 +1,51 @@
+---
+title: "Web 도구체인 초기화"
+sidebarTitle: "Web Setup"
+description: "code_run만 있는 환경에서 web_scan / web_execute_js 능력 구축"
+icon: "screwdriver"
+---
+
+## 언제 쓰는가
+초기 설치 시, `code_run`은 사용 가능하지만 web 도구가 아직 설정되지 않은 경우. 이미 web_scan/web_execute_js가 작동하면 본 SOP 실행 불필요.
+
+## 작동 원리 (Why)
+GenericAgent의 web 능력은 `tmwd_cdp_bridge` Chrome 확장을 통해 이뤄집니다 (CDP debugger + scripting + cookie 권한). 시스템 권한(code_run)만 갖춘 상태에서 이 확장을 설치하면 web_scan/web_execute_js가 활성화됩니다.
+
+## 사전: 브라우저 감지
+설치할 Chrome (또는 호환 브라우저)을 사전 감지.
+
+## tmwd_cdp_bridge 확장 설치
+
+확장 경로: `../assets/tmwd_cdp_bridge/` (MV3 Chrome 확장)
+
+### 확장 관리 페이지 자동 열기
+`chrome://extensions`는 명령줄이나 JS로 열 수 없음. **클립보드 + 주소창** 방식 필요.
+
+### 설치 단계 (자동화 어려움)
+1. 확장 관리 페이지 열고 **개발자 모드** 활성화
+2. **압축 해제된 확장 프로그램 로드** 클릭, `assets/tmwd_cdp_bridge/` 디렉터리 선택. 또는 사용자에게 직접 드래그 요청
+3. "오류" 표시되어도 무시 가능 (보통 GA 미연결이라서)
+
+## 검증
+
+<Warning>
+`web_scan`이 「사용 가능한 탭이 없음」을 표시한다고 해서 반드시 확장 미설치는 아닙니다. 브라우저 미실행이거나 blank 페이지만 있을 수도 있음.
+</Warning>
+
+검증 흐름:
+1. 함부로 시도 금지
+2. `start "" "https://www.baidu.com"`으로 정상 페이지 열기
+3. `web_scan`으로 재확인
+4. 여전히 사용 불가 → 기본 브라우저 / 플러그인 설치 위치 자동 감지 불가 → **사용자 협조 요청**
+
+## 자주 빠지는 함정
+
+<Warning>
+- chrome 확장 페이지는 자동화 어려움 — 사용자 직접 작업 필요할 수 있음
+- about:blank 등 내부 페이지에서는 확장 미로딩 — 정상 URL로 검증할 것
+- 기본 브라우저가 무엇인지 / 플러그인이 어느 브라우저에 설치됐는지 자동 판별 불가
+</Warning>
+
+## 관련
+- [TMWebDriver SOP](/memory/sops/tmwebdriver)
+- [Installation 가이드](/installation)
