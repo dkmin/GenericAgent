@@ -1,23 +1,23 @@
 # Vision API SOP
 
-## ⚠️ 前置规则（必须遵守）
+## ⚠️ 사전 규칙 (반드시 준수)
 
-1. **先枚举窗口**：调用 vision 前必须先用 `pygetwindow` 枚举窗口标题，确认目标窗口存在且已激活到前台。窗口不存在就不要截图。
-2. **🚫 禁止全屏截图**：必须先利用ljqCtrl截取窗口区域。能截局部（如标题栏）就不截整窗口，能截窗口就绝不全屏。全屏截图在任何场景下都不允许。
-3. **能不用 vision 就不用**：如果窗口标题/本地 OCR（`ocr_utils.py`）能获取所需信息，就不要调用 vision API，省 token 且更可靠。Vision 是最后手段。
+1. **먼저 창 열거**: vision 호출 전에 반드시 `pygetwindow` 로 창 제목을 열거하여, 대상 창이 존재하고 전면에 활성화되어 있는지 확인. 창이 없으면 스크린샷 금지.
+2. **🚫 전체 화면 스크린샷 금지**: 반드시 ljqCtrl 로 창 영역을 캡처. 부분 (예: 타이틀바) 으로 충분하면 창 전체를 찍지 말고, 창으로 충분하면 절대 전체 화면을 찍지 마십시오. 전체 화면 스크린샷은 어떤 시나리오에서도 허용 안 됨.
+3. **vision 안 써도 되면 안 쓰기**: 창 제목/로컬 OCR (`ocr_utils.py`) 로 필요한 정보를 얻을 수 있다면 vision API 를 호출하지 마십시오. token 절약하고 더 신뢰할 수 있음. Vision 은 최후 수단.
 
-## 快速用法
+## 빠른 사용법
 
 ```python
 from vision_api import ask_vision
-result = ask_vision(image, prompt="描述图片内容", backend="claude", timeout=60, max_pixels=1_440_000)
-# image: 文件路径(str/Path) 或 PIL Image
-# backend: 'claude'(默认) | 'openai' | 'modelscope'
-# 返回 str：成功为模型回复，失败为 'Error: ...'
+result = ask_vision(image, prompt="이미지 내용 설명", backend="claude", timeout=60, max_pixels=1_440_000)
+# image: 파일 경로 (str/Path) 또는 PIL Image
+# backend: 'claude' (기본) | 'openai' | 'modelscope'
+# 반환 str: 성공 시 모델 응답, 실패 시 'Error: ...'
 ```
 
-## 如果没有 `vision_api.py`，初次构建vision能力
+## `vision_api.py` 가 없을 때, vision 능력 최초 구축
 
-1. 复制 `memory/vision_api.template.py` → `memory/vision_api.py`
-2. 只改头部"用户配置区"：去 `mykey.py` 里扫描变量名（⚠️ 只看名字，禁止输出 apikey 值），尝试找能用配置名填入 `CLAUDE_CONFIG_KEY` / `OPENAI_CONFIG_KEY`，`DEFAULT_BACKEND` 选后端，并测试
-3. 保底：没有可用 config 时去 `https://modelscope.cn/my/myaccesstoken` 申请 token 填入 `MODELSCOPE_API_KEY`
+1. `memory/vision_api.template.py` → `memory/vision_api.py` 복사
+2. 헤더의 "사용자 설정 영역" 만 수정: `mykey.py` 에서 변수명 스캔 (⚠️ 이름만 보고, apikey 값 출력 금지), 사용 가능한 설정명을 찾아 `CLAUDE_CONFIG_KEY` / `OPENAI_CONFIG_KEY` 에 채우고, `DEFAULT_BACKEND` 로 백엔드 선택 후 테스트
+3. 폴백: 사용 가능한 config 가 없으면 `https://modelscope.cn/my/myaccesstoken` 에서 token 발급받아 `MODELSCOPE_API_KEY` 에 입력

@@ -1,115 +1,115 @@
 # GitHub Contribution SOP
-**触发**：需要给开源项目提 PR（修 bug / 加功能 / 改文档）| **禁用**：仅读代码、不需要提交变更时
-**核心原则**：一个 PR 做一件事，测试通过才推，尊重项目规范
+**트리거**: 오픈소스 프로젝트에 PR 제출 (버그 수정 / 기능 추가 / 문서 수정) | **금지**: 코드만 읽고 변경 제출이 필요 없는 경우
+**핵심 원칙**: 한 PR 은 한 가지 일만, 테스트 통과해야 push, 프로젝트 규칙 존중
 
-## 前置准备（每个新项目首次执行）
-1. **读项目规范**（必须，不可跳过）
+## 사전 준비 (새 프로젝트 첫 진입 시)
+1. **프로젝트 규칙 읽기** (필수, 건너뛰기 금지)
    ```
-   file_read('CONTRIBUTING.md')  # 贡献指南
-   file_read('.github/PULL_REQUEST_TEMPLATE.md')  # PR 模板
-   file_read('.github/ISSUE_TEMPLATE/')  # Issue 模板
+   file_read('CONTRIBUTING.md')  # 기여 가이드
+   file_read('.github/PULL_REQUEST_TEMPLATE.md')  # PR 템플릿
+   file_read('.github/ISSUE_TEMPLATE/')  # Issue 템플릿
    ```
-   没有就读 README 的 Contributing 部分。如果都没有，按本 SOP 默认流程。
+   없으면 README 의 Contributing 섹션을 읽습니다. 그것도 없으면 본 SOP 의 기본 절차를 따릅니다.
 
-2. **了解项目结构和测试方式**
+2. **프로젝트 구조와 테스트 방식 파악**
    ```
-   # 找测试命令
+   # 테스트 명령 찾기
    file_read('package.json')  # Node: scripts.test
-   file_read('Makefile')      # 或 Makefile
-   file_read('pyproject.toml') # Python: [tool.pytest] 等
+   file_read('Makefile')      # 또는 Makefile
+   file_read('pyproject.toml') # Python: [tool.pytest] 등
    ```
-   记下测试命令备用。跑不了测试的 PR = 未验证的 PR。
+   테스트 명령을 메모해 둡니다. 테스트를 돌리지 않은 PR = 검증되지 않은 PR.
 
 3. **Fork + Clone**
    ```
    code_run('bash', 'gh repo fork OWNER/REPO --clone && cd REPO && git remote -v')
    ```
 
-## 工作流程（每个 PR）
+## 작업 흐름 (PR 마다)
 
-### Step 1: 确认目标
-- 读相关 Issue（如果有）
-- 一句话写清楚：改什么、为什么改
-- 检查：是否有人已在做？（看 Issue assignee、近期 PR）
+### Step 1: 목표 확정
+- 관련 Issue 읽기 (있을 경우)
+- 한 줄로 명확히: 무엇을, 왜 바꾸는가
+- 확인: 누가 이미 작업 중인가? (Issue assignee, 최근 PR 확인)
 
-### Step 2: 创建分支
+### Step 2: 브랜치 생성
 ```
-code_run('bash', 'git checkout -b fix/issue-描述 && git status')
+code_run('bash', 'git checkout -b fix/issue-설명 && git status')
 ```
-分支命名：`fix/xxx`（修 bug）、`feat/xxx`（新功能）、`docs/xxx`（文档）
+브랜치 명명: `fix/xxx` (버그 수정), `feat/xxx` (신규 기능), `docs/xxx` (문서)
 
-### Step 3: 实现变更
-- **最小化改动**：只改需要改的，不顺手重构无关代码
-- **遵循项目风格**：缩进、命名、注释风格跟现有代码保持一致
-- **每改一个逻辑点就提交一次**：
+### Step 3: 변경 구현
+- **최소 변경**: 꼭 바꿔야 하는 것만, 무관한 코드를 김에 리팩터링하지 않습니다
+- **프로젝트 스타일 준수**: 들여쓰기, 네이밍, 주석 스타일을 기존 코드와 일치시킵니다
+- **로직 단위마다 한 번씩 커밋**:
   ```
-  code_run('bash', 'git add -A && git commit -m "fix: 简洁描述"')
+  code_run('bash', 'git add -A && git commit -m "fix: 간결한 설명"')
   ```
-- Commit message 格式：遵循项目规范（Conventional Commits / 项目自定义）
-  - 没有规范就用：`type: 简短描述`
+- Commit 메시지 형식: 프로젝트 규칙 준수 (Conventional Commits / 프로젝트 자체 규칙)
+  - 규칙이 없으면: `type: 짧은 설명`
   - type: fix / feat / docs / refactor / test / chore
 
-### Step 4: 测试（不可跳过）
+### Step 4: 테스트 (건너뛰기 금지)
 ```
-code_run('bash', '项目测试命令')  # npm test / pytest / go test ./...
+code_run('bash', '프로젝트 테스트 명령')  # npm test / pytest / go test ./...
 ```
-**检查项**：
-- [ ] 所有现有测试通过？
-- [ ] 新功能有对应测试？（如果项目有测试习惯）
-- [ ] lint/type check 通过？（如果项目有）
+**체크 항목**:
+- [ ] 기존 테스트 모두 통과?
+- [ ] 신규 기능에 대응 테스트가 있는가? (프로젝트가 테스트 문화가 있다면)
+- [ ] lint/type check 통과? (프로젝트에 있다면)
 
-**⛔ 测试不过不推代码。修到过为止。**
+**⛔ 테스트 미통과 시 push 금지. 통과할 때까지 수정.**
 
-### Step 5: 推送 + 提 PR
+### Step 5: Push + PR 제출
 ```
 code_run('bash', 'git push origin HEAD')
 ```
-PR 内容：
-- **标题**：`type: 简洁描述` 或按项目模板
-- **正文**必须包含：
-  - 改了什么（What）
-  - 为什么改（Why）— 关联 Issue 用 `Fixes #123`
-  - 怎么测的（Testing）
-- **不要写**：过度解释、无关背景、自夸
+PR 내용:
+- **제목**: `type: 간결한 설명` 또는 프로젝트 템플릿 준수
+- **본문**에 반드시 포함:
+  - 무엇을 바꿨는가 (What)
+  - 왜 바꿨는가 (Why) — Issue 와 연결할 때는 `Fixes #123`
+  - 어떻게 테스트했는가 (Testing)
+- **쓰지 말 것**: 과한 설명, 무관한 배경, 자화자찬
 
-### Step 6: CI 检查
-PR 提交后等 CI：
-- ✅ 全过 → 等 review
-- ❌ 有失败 → 看日志，修自己的问题
-  - CI 失败是 upstream 问题（跟你的改动无关）→ 在 PR 里说明
+### Step 6: CI 확인
+PR 제출 후 CI 대기:
+- ✅ 모두 통과 → review 대기
+- ❌ 실패 → 로그를 보고 자기 문제부터 수정
+  - CI 실패가 upstream 문제 (당신 변경과 무관) → PR 에 명시
   ```
   code_run('bash', 'gh run view --log-failed')
   ```
 
-### Step 7: 回应 Review
-- **reviewer 说改就改**，不要争论风格偏好
-- **不同意的技术决定**：礼貌说明理由，但最终尊重 maintainer
-- **改完后**：追加 commit + 测试 + push，不要 force push（除非 maintainer 要求 squash）
-- **reviewer 要求加测试** → 加，这不是可选项
+### Step 7: Review 대응
+- **reviewer 가 고치라면 고침**, 스타일 취향으로 다투지 않음
+- **동의하지 않는 기술 결정**: 정중하게 이유를 설명하되, 최종 판단은 maintainer 존중
+- **수정 후**: commit 추가 + 테스트 + push, force push 금지 (maintainer 가 squash 를 요청한 경우 제외)
+- **reviewer 가 테스트 추가 요청** → 추가합니다, 선택 사항이 아닙니다
 
-## 常见错误（避坑）
+## 흔한 실수 (회피)
 
-| 错误 | 正确做法 |
+| 실수 | 올바른 방법 |
 |------|----------|
-| 一个 PR 改多件事 | 拆成多个 PR，每个独立 |
-| 提了 PR 不跟进 | 每天检查 review 状态 |
-| 测试没跑就推 | Step 4 是硬门槛 |
-| 改了代码风格混乱 | 跟现有代码一致 |
-| commit message 写 "update" | 写具体改了什么 |
-| force push 覆盖 review 历史 | 追加 commit |
-| PR 描述空白 | 写 What/Why/Testing |
+| 한 PR 에 여러 일 | 독립적인 여러 PR 로 분리 |
+| PR 제출 후 방치 | 매일 review 상태 확인 |
+| 테스트 안 돌리고 push | Step 4 는 강제 게이트 |
+| 코드 스타일 흐트러짐 | 기존 코드와 일치 |
+| commit message "update" | 무엇을 바꿨는지 구체적으로 |
+| force push 로 review 이력 덮어쓰기 | commit 추가 |
+| PR 설명 비어있음 | What/Why/Testing 작성 |
 
-## 跟进状态机
+## 후속 상태 머신
 
 ```
-PR 提交 → 等 CI
-  CI ✅ → 等 Review
-    Review 通过 → 等 Merge ✅
-    Review 要改 → 改 + 测试 → 重回等 CI
-  CI ❌ → 修 → 重回等 CI
+PR 제출 → CI 대기
+  CI ✅ → Review 대기
+    Review 통과 → Merge 대기 ✅
+    Review 수정 요구 → 수정 + 테스트 → CI 대기로 복귀
+  CI ❌ → 수정 → CI 대기로 복귀
 ```
 
-每轮跟进用：
+매 라운드 후속 확인:
 ```
 code_run('bash', 'gh pr status')
 code_run('bash', 'gh pr checks PR_NUMBER')

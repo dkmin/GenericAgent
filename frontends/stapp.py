@@ -23,7 +23,7 @@ st.set_page_config(page_title="Cowork", layout="wide")
 def init():
     agent = GeneraticAgent()
     if agent.llmclient is None:
-        st.error("⚠️ 未配置任何可用的 LLM 接口，请设置mykey.py。")
+        st.error("⚠️ 사용 가능한 LLM 연결이 없습니다. mykey.py를 설정해주세요.")
         st.stop()
     else: threading.Thread(target=agent.run, daemon=True).start()
     return agent
@@ -40,24 +40,24 @@ def render_sidebar():
     llm_options = agent.list_llms()
     current_idx = agent.llm_no
     llm_labels = {idx: f"{idx}: {(name or '').strip()}" for idx, name, _ in llm_options}
-    st.caption(f"LLM Core: {llm_labels.get(current_idx, str(current_idx))}", help="下拉切换备用链路")
-    selected_idx = st.selectbox("备用链路", [idx for idx, _, _ in llm_options], index=next((i for i, (idx, _, _) in enumerate(llm_options) if idx == current_idx), 0), format_func=llm_labels.get, label_visibility="collapsed", key="sidebar_llm_select")
+    st.caption(f"LLM Core: {llm_labels.get(current_idx, str(current_idx))}", help="드롭다운으로 백업 라인 전환")
+    selected_idx = st.selectbox("백업 라인", [idx for idx, _, _ in llm_options], index=next((i for i, (idx, _, _) in enumerate(llm_options) if idx == current_idx), 0), format_func=llm_labels.get, label_visibility="collapsed", key="sidebar_llm_select")
     if selected_idx != current_idx:
         agent.next_llm(selected_idx); st.rerun(scope="fragment")
     last_reply_time = st.session_state.get('last_reply_time', 0)
     if last_reply_time > 0:
-        st.caption(f"空闲时间：{int(time.time()) - last_reply_time}秒", help="当超过30分钟未收到回复时，系统会自动任务")
-    if st.button("强行停止任务"):
-        agent.abort(); st.toast("已发送停止信号"); st.rerun()
-    if st.button("重新注入工具"):
+        st.caption(f"유휴 시간: {int(time.time()) - last_reply_time}초", help="30분 이상 응답이 없으면 자동으로 작업을 실행합니다")
+    if st.button("작업 강제 중지"):
+        agent.abort(); st.toast("중지 신호를 전송했습니다"); st.rerun()
+    if st.button("도구 재주입"):
         agent.llmclient.last_tools = ''
         try:
             hist_path = os.path.join(script_dir, '..', 'assets', 'tool_usable_history.json')
             with open(hist_path, 'r', encoding='utf-8') as f: tool_hist = json.load(f)
             agent.llmclient.backend.history.extend(tool_hist)
-            st.toast(f"已重新注入工具，追加了 {len(tool_hist)} 条示范记录")
-        except Exception as e: st.toast(f"注入工具示范失败: {e}")
-    if st.button("🐱 桌面宠物"):
+            st.toast(f"도구를 재주입했습니다. 예제 {len(tool_hist)}건 추가됨")
+        except Exception as e: st.toast(f"도구 예제 주입 실패: {e}")
+    if st.button("🐱 데스크탑 펫"):
         kwargs = {'creationflags': 0x08} if sys.platform == 'win32' else {}
         pet_script = os.path.join(script_dir, 'desktop_pet_v2.pyw')
         if not os.path.exists(pet_script): pet_script = os.path.join(script_dir, 'desktop_pet.pyw')
@@ -72,26 +72,26 @@ def render_sidebar():
         def _pet_hook(ctx):
             parts = [f"Turn {ctx.get('turn','?')}"]
             if ctx.get('summary'): parts.append(ctx['summary'])
-            if ctx.get('exit_reason'): parts.append('任务已完成')
+            if ctx.get('exit_reason'): parts.append('작업이 완료되었습니다')
             _pet_req(f'msg={quote(chr(10).join(parts))}')
             if ctx.get('exit_reason'): _pet_req('state=idle')
         agent._turn_end_hooks['pet'] = _pet_hook
-        st.toast("桌面宠物已启动")
-    
+        st.toast("데스크탑 펫이 시작되었습니다")
+
     st.divider()
-    if st.button("开始空闲自主行动"):
+    if st.button("유휴 자율 행동 시작"):
         st.session_state.last_reply_time = int(time.time()) - 1800
-        st.toast("已将上次回复时间设为1800秒前"); st.rerun()
+        st.toast("마지막 응답 시각을 1800초 전으로 설정했습니다"); st.rerun()
     if st.session_state.autonomous_enabled:
-        if st.button("⏸️ 禁止自主行动"):
+        if st.button("⏸️ 자율 행동 중지"):
             st.session_state.autonomous_enabled = False
-            st.toast("⏸️ 已禁止自主行动"); st.rerun()
-        st.caption("🟢 自主行动运行中，会在你离开它30分钟后自动进行")
+            st.toast("⏸️ 자율 행동을 중지했습니다"); st.rerun()
+        st.caption("🟢 자율 행동 실행 중 — 30분 동안 자리를 비우면 자동으로 시작됩니다")
     else:
-        if st.button("▶️ 允许自主行动", type="primary"):
+        if st.button("▶️ 자율 행동 허용", type="primary"):
             st.session_state.autonomous_enabled = True
-            st.toast("✅ 已允许自主行动"); st.rerun()
-        st.caption("🔴 自主行动已停止")
+            st.toast("✅ 자율 행동을 허용했습니다"); st.rerun()
+        st.caption("🔴 자율 행동이 중지된 상태")
 with st.sidebar: render_sidebar()
 
 def fold_turns(text):
@@ -184,7 +184,7 @@ _js_ime_fix = ("" if os.name == 'nt' else
     "f();new MutationObserver(f).observe(d.body,{childList:1,subtree:1})}()")
 _embed_html(f'<script>{_js_scroll_fix};{_js_ime_fix}</script>', height=0)
 
-if prompt := st.chat_input("any task?"):
+if prompt := st.chat_input("작업을 입력하세요"):
     ts = time.strftime("%Y-%m-%d %H:%M:%S")
     cmd = (prompt or "").strip()
     def _reset_and_rerun():
