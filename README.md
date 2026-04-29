@@ -128,15 +128,21 @@ Besides the default Streamlit web UI, you can also try other frontend styles:
 ```bash
 python frontends/qtapp.py                # Qt-based desktop app
 streamlit run frontends/stapp2.py        # Alternative Streamlit UI
+python gatui.py                          # Terminal CLI (TUI) frontend #260429-21
 ```
 
 ### Common Chat Commands
 
-The default Streamlit desktop UI started by `python launch.pyw`, plus the QQ / Telegram / Feishu / WeCom / DingTalk frontends, support these chat commands:
+The default Streamlit desktop UI started by `python launch.pyw`, the `gatui.py` CLI, plus the QQ / Telegram / Feishu / WeCom / DingTalk frontends, support these chat commands: #260429-21
 
+- `/help` - show command list
+- `/status` - show running state and current LLM
+- `/stop` - abort the current task
 - `/new` - start a fresh conversation and clear the current context
+- `/restore` - restore the most recent conversation snapshot
 - `/continue` - list recoverable conversation snapshots
 - `/continue N` - restore the `N`th recoverable conversation
+- `/llm` / `/llm N` - list LLMs / switch to LLM `N`
 
 
 ## 📊 Comparison with Similar Tools
@@ -417,15 +423,21 @@ dingtalk_allowed_users = ["your_staff_id"]  # 或 ['*']
 ```bash
 python frontends/qtapp.py                # 基于 Qt 的桌面应用
 streamlit run frontends/stapp2.py        # 另一种 Streamlit 风格 UI
+python gatui.py                          # 터미널 CLI (TUI) 前端 #260429-21
 ```
 
 ### 通用聊天命令
 
-默认通过 `python launch.pyw` 启动的 Streamlit 桌面 UI，以及 QQ / Telegram / 飞书 / 企业微信 / 钉钉前端，都支持以下命令：
+默认通过 `python launch.pyw` 启动的 Streamlit 桌面 UI、`gatui.py` CLI，以及 QQ / Telegram / 飞书 / 企业微信 / 钉钉前端，都支持以下命令： #260429-21
 
+- `/help` - 显示命令列表
+- `/status` - 显示运行状态与当前 LLM
+- `/stop` - 中止当前任务
 - `/new` - 开启新对话并清空当前上下文
+- `/restore` - 恢复最近一次对话快照
 - `/continue` - 列出可恢复会话快照
 - `/continue N` - 恢复第 `N` 个可恢复会话
+- `/llm` / `/llm N` - 列出 LLM / 切换到第 `N` 个 LLM
 
 
 ## 📊 与同类产品对比
