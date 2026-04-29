@@ -145,7 +145,7 @@ def _snapshot_current_log(pid=None):
     return snapshot
 
 
-def reset_conversation(agent, message='🆕 已开启新对话，当前上下文已清空'):
+def reset_conversation(agent, message='🆕 새 대화를 시작했습니다. 현재 컨텍스트가 초기화되었습니다.'):
     """Abort current work and clear all known frontend-visible conversation state."""
     try:
         agent.abort()
@@ -177,7 +177,7 @@ def restore(agent, path):
     try:
         with open(path, encoding='utf-8', errors='replace') as fh:
             content = fh.read()
-    except Exception as e: return f'❌ 读取失败: {e}', False
+    except Exception as e: return f'❌ 읽기 실패: {e}', False
     pairs = _pairs(content)
     if not pairs: return f'❌ {os.path.basename(path)} 为空或格式不符', False
     history = _parse_native_history(pairs)
@@ -185,14 +185,14 @@ def restore(agent, path):
     if history is not None:
         agent.abort()
         _replace_backend_history(agent, history)
-        return f'✅ 已恢复 {len(pairs)} 轮完整对话（{name}）\n(已写入 backend.history，可直接继续)', True
+        return f'✅ {len(pairs)}턴의 전체 대화를 복원했습니다 ({name})\n(backend.history 에 기록 — 그대로 이어서 진행 가능)', True
     from chatapp_common import _restore_native_history, _restore_text_pairs
     summary = _restore_text_pairs(content) or _restore_native_history(content)
     if not summary: return f'❌ {name} 无法解析（非 native 且无摘要可提取）', False
     agent.abort()
     agent.history.extend(summary)
     n = sum(1 for l in summary if l.startswith('[USER]: '))
-    return f'⚠️ 非 native 格式，已降级恢复 {n} 轮摘要（{name}）\n(请输入新问题继续)', False
+    return f'⚠️ native 형식이 아니어서 {n}턴 요약만 복원했습니다 ({name})\n(새 질문을 입력해 계속 진행하세요)', False
 
 def handle(agent, query, display_queue):
     """Dispatch /continue or /continue N. Returns None if consumed else original query."""
