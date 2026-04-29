@@ -1,0 +1,28 @@
+{/* Reusable: import MykeySetup from '/snippets/mykey-setup.mdx' */}
+
+`mykey_template_en.py`를 `mykey.py`로 복사하고 LLM 키를 채웁니다.
+
+<CodeGroup>
+```python OpenAI
+native_oai_config = {
+    'name': 'gpt',
+    'apikey': 'sk-...',
+    'apibase': 'https://api.openai.com/v1',
+    'model': 'gpt-5.4-mini',
+    'api_mode': 'responses',
+    'reasoning_effort': 'medium',
+}
+```
+
+```python Anthropic
+native_claude_config = {
+    'name': 'claude',
+    'apikey': 'sk-ant-...',
+    'apibase': 'https://api.anthropic.com',
+    'model': 'claude-opus-4-7[1m]',
+    'thinking_type': 'adaptive',
+}
+```
+</CodeGroup>
+
+변수명에 `api`나 `config`가 포함되어야 자동 감지됩니다. 자세한 옵션은 [Configure LLM](/configure-llm).

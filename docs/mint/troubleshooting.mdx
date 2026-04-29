@@ -1,0 +1,86 @@
+---
+title: "자주 만나는 에러 — 빠른 진단표"
+sidebarTitle: "Troubleshooting"
+description: "API 401·포트 충돌·ADB 권한·Streamlit 초기화 실패 등 운영 중 마주치는 에러의 원인과 해결법."
+icon: "wrench"
+---
+
+## 빠른 진단표
+
+| 증상 | 원인 | 해결 |
+|---|---|---|
+| `mykey.py is not configured` | `mykey.py` 부재 또는 변수명 미매칭 | `mykey_template_en.py`를 복사 후 변수명에 `native_oai_config` / `native_claude_config` 포함 확인 |
+| `401 Unauthorized` (LLM) | API 키 잘못됨 또는 expired | `curl -H "Authorization: Bearer $KEY" $APIBASE/models`로 키 단독 검증 |
+| `Address already in use: 18501` | Streamlit 포트 충돌 | `launch.pyw`는 18501–18599 범위에서 자동 탐색. 모든 포트 점유 시 다른 프로세스 종료 또는 범위 확장 (`launch.pyw:8`) |
+| `Address already in use: 45762` | scheduler 중복 실행 | scheduler는 단일 인스턴스 락. `pkill -f scheduler.py` 후 재시작 |
+| `ImportError: No module named pywebview` | 데스크탑 창 의존성 미설치 | `pip install pywebview` (또는 `streamlit run frontends/stapp.py`로 우회) |
+| `mintlify dev` 멈춤 또는 빌드 에러 | Node v22+ 비호환 | `nvm use 20` (또는 v18~v20) 사용 |
+| `<숫자>` 같은 표현이 빌드 에러 | MDX가 JSX 태그로 오인 | 백틱 감싸기: `` `<200` `` 또는 `&lt;200` |
+| ADB 도구가 동작 안 함 | macOS 접근성·화면 기록 권한 미허용 | 시스템 설정 > 개인정보 보호 및 보안 > 접근성/화면 기록에 터미널·Python 추가 |
+| `gw not found` (창 활성화 실패) | macOS Window 컨트롤 미설치 | `brew install --cask raycast` 또는 `gw` 대안 — `ljqCtrl_sop` 참고 |
+| `web_scan` 응답 없음 | TMWebDriver 셋업 미완료 | 첫 호출 시 `web_setup_sop` 자동 진입. 수동으로 `assets/install-macos-app.sh` 실행 |
+| 화면 캡처 결과 검정 | macOS 화면 기록 권한 부재 | 시스템 설정 > 개인정보 보호 및 보안 > 화면 기록 |
+| `/continue N` 인덱스 초과 | 파일 mtime 캐싱 시점 차이 | `/continue` 다시 입력해 목록 갱신 |
+| 메신저 봇 무응답 | 프로세스 락 포트 점유 (19528~19531) | `lsof -i :19528~19531` 확인, 중복 인스턴스 종료 |
+| Streamlit 사이드바 "사용 가능한 LLM 연결이 없습니다" | `mykey.py` 변수명 미매칭 (`api`/`config` 키워드 부재) | 변수명에 `api`나 `config` 포함시키기 (예: `native_oai_config_main`) |
+| `ast.literal_eval` 에러 (세션 파싱) | 응답 본문이 잘린 상태에서 파싱 시도 | 라이브 로그가 살아있는지 확인 — 진행 중 PID 파일은 끝에 미완 블록 가능 |
+| Langfuse trace 안 보임 | `langfuse` 라이브러리 미설치 | `pip install langfuse` 후 `mykey.py`에 `langfuse_config` 추가 — 둘 다 있어야 활성화 ([Plugins](/guides/plugins)) |
+
+## 디버깅 패턴
+
+<Steps>
+  <Step title="라이브 로그 먼저 확인">
+    ```bash
+    tail -f temp/model_responses/model_responses_$(pgrep -f stapp.py).txt
+    ```
+    매 LLM 호출이 실시간 append됩니다 — 어디서 멈췄는지 즉시 보입니다.
+  </Step>
+  <Step title="포트 상태 확인">
+    ```bash
+    lsof -iTCP -sTCP:LISTEN | grep -E "1850|18599|45762|19528|19531|41983"
+    ```
+    Streamlit·scheduler·메신저 봇·데스크탑 펫 락 포트 한 번에 점검.
+  </Step>
+  <Step title="atomic tool 단독 호출">
+    채팅에 `code_run` 직접 호출해 환경 점검:
+    ```text
+    code_run으로 `python -c "import sys; print(sys.path)"` 실행해줘
+    ```
+  </Step>
+  <Step title="`/session.` 런타임 변경">
+    재시작 없이 `/session.read_timeout=300`처럼 즉시 조정. ([runtime-overrides](/reference/runtime-overrides))
+  </Step>
+</Steps>
+
+## 검증 체크리스트
+
+LLM 키 셋업 후 동작 확인:
+
+```text
+이 디렉토리의 .py 파일 중 가장 큰 5개를 라인 수와 함께 알려줘
+```
+
+`code_run` 한 번이면 끝나는 작업 → 답이 안 오면 LLM 연결 자체가 문제입니다.
+
+## 그래도 안 풀리면
+
+1. **로그 확인**: `temp/model_responses/`에서 마지막 Prompt/Response 블록 확인
+2. **GitHub 이슈**: [dkmin/GenericAgent/issues](https://github.com/dkmin/GenericAgent/issues)에 라이브 로그 발췌 + `mykey.py`의 모델·session 종류 첨부 (API 키는 절대 제외)
+3. **Plan Mode 진입**: 채팅에 "현재 환경 진단해줘" — `plan_sop`이 자동으로 환경 점검 SOP를 호출
+
+## 관련
+
+<CardGroup cols={2}>
+  <Card title="Configure LLM" icon="key" href="/configure-llm">
+    `mykey.py` 셋업 검증
+  </Card>
+  <Card title="Runtime Overrides" icon="sliders" href="/reference/runtime-overrides">
+    `/session.` 즉시 조정
+  </Card>
+  <Card title="Session Log Format" icon="file-lines" href="/reference/session-log-format">
+    라이브 로그 파싱
+  </Card>
+  <Card title="Plan SOP" icon="list-check" href="/memory/sops/plan-mode">
+    환경 진단 진입점
+  </Card>
+</CardGroup>

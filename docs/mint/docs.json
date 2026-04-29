@@ -27,6 +27,12 @@
               "configure-llm",
               "first-task"
             ]
+          },
+          {
+            "group": "운영",
+            "pages": [
+              "troubleshooting"
+            ]
           }
         ]
       },
