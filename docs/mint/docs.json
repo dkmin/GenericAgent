@@ -48,7 +48,8 @@
               "concepts/architecture",
               "concepts/atomic-tools",
               "concepts/agent-loop",
-              "concepts/memory-hierarchy"
+              "concepts/memory-hierarchy",
+              "concepts/plugin-system"
             ]
           }
         ]
@@ -169,7 +170,10 @@
               "reference/llmcore",
               "reference/agentmain",
               "reference/tmwebdriver",
-              "reference/tools-schema"
+              "reference/tools-schema",
+              "reference/system-prompt",
+              "reference/reflect",
+              "reference/session-log-format"
             ]
           },
           {
