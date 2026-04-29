@@ -17,10 +17,14 @@ pip install -r requirements.txt
 
 ## 2. LLM 키 설정
 
-`mykey_template_en.py`를 `mykey.py`로 복사하고 키를 채웁니다.
+import MykeySetup from '/snippets/mykey-setup.mdx';
+
+<MykeySetup />
+
+{/* 기존 인라인 블록은 snippet으로 추출되었지만, 키 옵션 표는 그대로 유지: */}
 
 <CodeGroup>
-```python OpenAI
+```python OpenAI (전체 옵션)
 native_oai_config = {
     'name': 'gpt',
     'apikey': 'sk-...',
@@ -31,7 +35,7 @@ native_oai_config = {
 }
 ```
 
-```python Anthropic
+```python Anthropic (전체 옵션)
 native_claude_config = {
     'name': 'claude',
     'apikey': 'sk-ant-...',

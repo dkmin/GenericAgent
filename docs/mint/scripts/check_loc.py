@@ -9,7 +9,15 @@ mismatch가 있으면 exit 1.
 """
 import os, re, sys
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+def _git_root():
+    import subprocess
+    try:
+        return subprocess.check_output(['git', 'rev-parse', '--show-toplevel'],
+                                       stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+ROOT = _git_root()
 ARCH_MD = os.path.join(ROOT, 'docs', 'mint', 'concepts', 'architecture.mdx')
 
 # (claimed_loc, file_path)

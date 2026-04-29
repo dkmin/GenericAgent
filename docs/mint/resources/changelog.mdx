@@ -1,0 +1,46 @@
+---
+title: "변경 이력"
+sidebarTitle: "Changelog"
+description: "주요 마일스톤 + 최근 git log 발췌."
+icon: "clock-rotate-left"
+---
+
+## 마일스톤 (README "Latest News")
+
+- **2026-04-21** — 📄 [기술 리포트 arXiv 공개](https://arxiv.org/abs/2604.17091): *GenericAgent: A Token-Efficient Self-Evolving LLM Agent via Contextual Information Density Maximization*
+- **2026-04-11** — **L4 세션 아카이브 메모리** 도입 + scheduler cron 통합
+- **2026-03-23** — 개인 위챗(WeChat) 봇 프론트엔드 지원
+- **2026-03-10** — [백만 규모 Skill 라이브러리 공개](https://mp.weixin.qq.com/s/q2gQ7YvWoiAcwxzaiwpuiQ)
+- **2026-03-08** — [GenericAgent 기반 정부 업무 봇 "Dintal Claw" 공개](https://mp.weixin.qq.com/s/eiEhwo-j6S-WpLxgBnNxBg)
+- **2026-03-01** — [기계지심(机器之心) 보도](https://mp.weixin.qq.com/s/uVWpTTF5I1yzAENV_qm7yg)
+- **2026-01-16** — GenericAgent V1.0 공개
+
+## 최근 커밋 (요약)
+
+| 시점 | 내용 |
+|---|---|
+| `114dfdb` | wechatapp 단일 인스턴스 락 포트 19528→19531 (qqapp/wecomapp 충돌 회피) |
+| `9047e7f` | (#157) CLI 중국어 백스페이스 잔영 수정 |
+| `ee899d4` | tgapp: 하드코딩 프록시 제거, mykey.py 설정만 사용 |
+| `888ce2f` | pyproject: dingtalk-stream 버전 제약 수정 (>=0.20) |
+| `466b2e8` | i18n: 메모리 SOP 및 stapp UI 한국어 번역 |
+| `d626c9f` | TMWebDriver 연결 에러 메시지 + SOP 개선 |
+| `513fec9` | NextWillSummary 제거, supervisor_sop 추가, 스트리밍 펜스 보호, L1 룰 강화 |
+| `9e19b8a` | `_parse_mixed_response` 중복 제거; `_fix_messages` 의 orphan tool_result 수정 |
+| `68982c3` | (#210) DingTalk: 지수 백오프 재연결 + 토큰 fetch 재시도 |
+| `5e1a788` | tgapp: Telegram 스트림 레이트 리밋 처리 |
+| `7070880` | `_stream_with_retry` 추출, MixinSession 스트림 중단 시 페일오버 |
+| `baf0f27` | (#208) tg: 턴 단위 스트리밍 + summary 표시 |
+| `f421913` | autonomous SOP: 마무리 4단계로, 완료 즉시 정지 |
+| `e58934c` | `/resume`: 리터럴 `\n` 을 실제 개행으로 정규화 후 regex 매치 |
+| `aaf15b6` | plan_sop 의 sop_index.md 의존 제거, L1 Insight 인덱스 사용 |
+| `78a9414` | SSL verify 옵션 추가, TG draft 활성화 |
+| `b8ecdc7` | stapp: fragment-only rerun 에서 `autonomous_enabled` 초기화 방어 |
+| `3c9496f` | `script_dir` 모듈 변수로 추출, procmem_sop 민감 코드 정리 |
+| `7ef7283` | tgapp: ask_user 인라인 후보 메뉴 |
+| `b83cf28` | deepseek 모델 히스토리에 thinking 블록 보장 |
+| `16c2243` | `_openai_stream` 시그니처 단순화 + `service_tier` 지원 |
+| `1144284` | (#184) wecom: 미디어 + 진행률 스트리밍 풀 업그레이드 |
+| `15112bc` | schema: `file_write` 모드 기본값 구현과 정렬 |
+
+전체 이력: [GitHub Commits](https://github.com/dkmin/GenericAgent/commits/main).
