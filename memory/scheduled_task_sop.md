@@ -1,27 +1,27 @@
-# 定时任务 SOP
+# 스케줄 작업 SOP
 
-目录：`../sche_tasks/` 放任务定义JSON，`../sche_tasks/done/` 放执行报告
+디렉터리: `../sche_tasks/` 에 작업 정의 JSON, `../sche_tasks/done/` 에 실행 보고서
 
-## 任务JSON格式（*.json）
+## 작업 JSON 형식 (*.json)
 ```json
 {"schedule":"08:00", "repeat":"daily", "enabled":true, "prompt":"...", "max_delay_hours":6}
 ```
-repeat可选：daily | weekday | weekly | monthly | once | every_Nh（每N小时）| every_Nd（每N天）
-max_delay_hours（可选，默认6）：超过schedule多少小时后不再触发，防止开机太晚执行过时任务
+repeat 가능 값: daily | weekday | weekly | monthly | once | every_Nh (N 시간마다) | every_Nd (N 일마다)
+max_delay_hours (선택, 기본 6): schedule 보다 몇 시간이 지나면 더 이상 트리거하지 않음. 부팅이 너무 늦어 옛 작업이 실행되는 것을 방지
 
-## 触发流程
-1. scheduler.py（reflect/）每60秒轮询 sche_tasks/*.json
-2. 条件全满足才触发：enabled=true + 当前时间≥schedule + 冷却时间已过（基于done/最新报告时间戳）
-3. 触发时拼prompt，含报告路径 `../sche_tasks/done/YYYY-MM-DD_任务名.md`
-4. **收到任务后第一件事**：用 update_working_checkpoint 记录报告目标文件路径，防止长任务执行中遗忘
-5. 执行完毕后将报告写入上述路径（scheduler靠此文件判断今天已执行）
+## 트리거 흐름
+1. scheduler.py (reflect/) 가 60초마다 sche_tasks/*.json 폴링
+2. 모든 조건 충족 시에만 트리거: enabled=true + 현재 시간 ≥ schedule + 쿨다운 경과 (done/ 의 최신 보고서 타임스탬프 기준)
+3. 트리거 시 prompt 조립, 보고서 경로 `../sche_tasks/done/YYYY-MM-DD_작업명.md` 포함
+4. **작업 수신 후 첫 번째로 할 일**: update_working_checkpoint 로 보고서 대상 파일 경로를 기록, 긴 작업 도중 잊지 않도록
+5. 실행 완료 후 위 경로에 보고서 작성 (scheduler 는 이 파일로 오늘 실행 여부를 판정)
 
-## 日志与监控
-- scheduler自动写日志到 `sche_tasks/scheduler.log`（触发/跳过/错误）
-- `scheduler.health_check()` 返回所有任务状态列表（HEALTHY/OVERDUE/DISABLED/NEVER_RUN/ERROR）
-- JSON解析错误、schedule格式错误、未知repeat类型均会记录日志
+## 로그와 모니터링
+- scheduler 가 자동으로 `sche_tasks/scheduler.log` 에 로그 작성 (트리거/스킵/에러)
+- `scheduler.health_check()` 는 모든 작업 상태 목록 반환 (HEALTHY/OVERDUE/DISABLED/NEVER_RUN/ERROR)
+- JSON 파싱 오류, schedule 형식 오류, 알 수 없는 repeat 유형은 모두 로그에 기록
 
-## 注意
-- once类型：执行一次后冷却100年（实际效果为永久跳过）
-- 任务文件只管"干什么"，报告路径由scheduler自动生成注入prompt
-- sche_tasks目录在../，即code root下
+## 참고
+- once 유형: 1회 실행 후 100년 쿨다운 (실효는 영구 스킵)
+- 작업 파일은 "무엇을 할지"만 관리, 보고서 경로는 scheduler 가 자동 생성하여 prompt 에 주입
+- sche_tasks 디렉터리는 ../, 즉 코드 root 아래에 있음

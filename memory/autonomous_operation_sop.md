@@ -1,45 +1,45 @@
-# 自主行动 SOP
+# 자율 행동 SOP
 
-⚠️ **路径警告**：autonomous_reports 在 temp/ 下，用`./autonomous_reports/`访问，**不是**`../memory/autonomous_reports/`或`../autonomous_reports/`！TODO在cwd下。
-报告存于 `./autonomous_reports/`，文件名 `RXX_简短描述.md`（XX从 history.txt 推断自增）。
+⚠️ **경로 주의**: autonomous_reports 는 temp/ 아래에 있으므로 `./autonomous_reports/` 로 접근합니다. **절대** `../memory/autonomous_reports/` 나 `../autonomous_reports/` 가 아닙니다! TODO 는 cwd 아래에 있습니다.
+보고서는 `./autonomous_reports/` 에 저장하며, 파일명은 `RXX_간단한설명.md` 형식입니다 (XX는 history.txt 로부터 추론하여 자동 증가).
 
-授权你进行自主行动，只要不对环境造成副作用都可进行。
+자율 행동을 허가합니다. 환경에 부작용을 주지 않는 한 자유롭게 진행해도 됩니다.
 
-## 启动（第一步）
-- update_working_checkpoint: `自主行动｜收尾时重读SOP | from autonomous_operation_sop.helper import *; set_todo()/complete_task(tasktitle, historyline, report_path)`
+## 시작 (1단계)
+- update_working_checkpoint: `자율행동｜마무리 시 SOP 재독 | from autonomous_operation_sop.helper import *; set_todo()/complete_task(tasktitle, historyline, report_path)`
 
-第二步：
+2단계:
 ```python
 from autonomous_operation_sop.helper import *
-print(get_history(40))  # 了解历史避免重复
-print(get_todo())       # 查看待办
+print(get_history(40))  # 이력 파악, 중복 회피
+print(get_todo())       # 할 일 확인
 ```
 
-## 任务选择
-- 有未完成条目 → 取**一条**，直接进入执行，其他条目下次执行
-- 无 TODO → 读 `autonomous_operation_sop/task_planning.md` 规划，下次执行
-- 不连续两次选相同子任务
-- 价值公式：**「AI训练数据无法覆盖」×「对未来协作有持久收益」**
+## 작업 선택
+- 미완료 항목이 있으면 → **하나만** 골라 바로 실행, 나머지는 다음 회차로
+- TODO 가 없으면 → `autonomous_operation_sop/task_planning.md` 를 읽고 계획만 짠 뒤 다음 회차에 실행
+- 같은 하위 작업을 두 번 연속 선택하지 않습니다
+- 가치 공식: **「AI 학습 데이터로 커버되지 않는 것」 × 「향후 협업에 지속적으로 도움이 되는 것」**
 
-## 执行
-- 选定任务后 update_working_checkpoint，将选中的TODO条目和执行注意事项 append 到 checkpoint 中
-- 调用code_run准备结尾回调, script为handler._done_hooks.append("重读自主任务sop，检查你刚刚的收尾工作是否正确，不正确则改正")，inline_eval=True （秘密参数）
-- ≤30回合，小步快跑，边探测边实验
-- 用临时脚本验证假设；禁只读即下结论，完整验证再写报告
-- 即使失败也记录实验过程和结果，失败报告同样有价值
-- 用户不在线，遇到需要决策的问题写入报告待审，不要卡住
+## 실행
+- 작업을 선정한 뒤 update_working_checkpoint 로 선택된 TODO 항목과 실행 시 주의점을 checkpoint 에 append 합니다
+- code_run 으로 마무리 콜백을 준비합니다. script 는 handler._done_hooks.append("자율 작업 sop를 다시 읽고 방금의 마무리 작업이 올바른지 점검, 잘못됐으면 수정"), inline_eval=True (비공개 인자)
+- 라운드 30회 이내, 작은 단위로 빠르게, 탐색하면서 실험합니다
+- 임시 스크립트로 가설을 검증합니다. 읽기만 하고 결론 내지 말고, 완전히 검증한 뒤 보고서를 작성합니다
+- 실패하더라도 실험 과정과 결과를 기록합니다. 실패 보고서도 가치가 있습니다
+- 사용자가 오프라인이므로 결정이 필요한 문제는 보고서에 기록해 검토를 기다리되, 멈추지 마세요
 
-**收尾（4件事缺一不可）**：
-0. 重读本sop
-1. 在cwd写报告（文件名任意），若有记忆更新建议，附在报告末尾
-2. `from/import helper; complete_task(tasktitle, historyline, report_path)` → 自动编号+移报告到 autonomous_reports/+prepend history（historyline 格式：`类型 | 主题 | 结论`，严格单行）
-3. `set_todo()` 获取TODO路径 → 将已完成条目标记为 `[x]`
-4. 结束，剩余TODO留到下次再做
+**마무리 (4가지 모두 필수)**:
+0. 본 sop 를 다시 읽기
+1. cwd 에 보고서 작성 (파일명 자유). 메모리 갱신 제안이 있으면 보고서 끝에 첨부
+2. `from/import helper; complete_task(tasktitle, historyline, report_path)` → 자동으로 번호 매기고 보고서를 autonomous_reports/ 로 이동, history 에 prepend (historyline 형식: `유형 | 주제 | 결론`, 엄격히 한 줄)
+3. `set_todo()` 로 TODO 경로 획득 → 완료 항목을 `[x]` 로 표시
+4. 종료. 남은 TODO 는 다음 회차에 처리
 
-## 权限边界
-- 无需批准：只读探测、cwd内写操作/脚本实验
-- 需写入报告待审：修改 global_mem / memory下SOP、安装软件、外部API调用、删除非临时文件
-- 绝对禁止：读取密钥、修改核心代码库、不可逆危险操作
+## 권한 경계
+- 승인 불필요: 읽기 전용 탐색, cwd 내 쓰기/스크립트 실험
+- 보고서로 검토 요청 필요: global_mem / memory 아래 SOP 수정, 소프트웨어 설치, 외부 API 호출, 비임시 파일 삭제
+- 절대 금지: 비밀키 읽기, 핵심 코드베이스 수정, 비가역적 위험 작업
 
-## 等待用户审查
-- 用户归来后审查报告，决定批准、修改或拒绝方案
+## 사용자 검토 대기
+- 사용자가 돌아온 뒤 보고서를 검토하여 승인/수정/거부를 결정합니다
