@@ -1,0 +1,207 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "GenericAgent",
+  "description": "3K줄로 키우는 자가진화 에이전트 — 9개 atomic tool과 계층형 메모리로 시간이 지날수록 똑똑해집니다.",
+  "colors": {
+    "primary": "#6366f1",
+    "light": "#a5b4fc",
+    "dark": "#4338ca"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "시작하기",
+        "icon": "rocket",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["introduction"]
+          },
+          {
+            "group": "5분 안에 굴리기",
+            "pages": [
+              "quickstart",
+              "installation",
+              "configure-llm",
+              "first-task"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "핵심 개념",
+        "icon": "lightbulb",
+        "groups": [
+          {
+            "group": "철학",
+            "pages": [
+              "concepts/overview",
+              "concepts/self-evolution",
+              "concepts/token-efficiency"
+            ]
+          },
+          {
+            "group": "아키텍처",
+            "pages": [
+              "concepts/architecture",
+              "concepts/atomic-tools",
+              "concepts/agent-loop",
+              "concepts/memory-hierarchy"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "사용법",
+        "icon": "wrench",
+        "groups": [
+          {
+            "group": "실행",
+            "pages": [
+              "guides/run-streamlit",
+              "guides/desktop-pet",
+              "guides/autonomous-mode",
+              "guides/scheduled-tasks"
+            ]
+          },
+          {
+            "group": "확장",
+            "pages": [
+              "guides/messenger-bots",
+              "guides/write-your-sop",
+              "guides/mixin-failover",
+              "guides/plugins"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "프론트엔드",
+        "icon": "window",
+        "groups": [
+          {
+            "group": "Frontends",
+            "pages": [
+              "frontends/streamlit",
+              "frontends/telegram",
+              "frontends/wechat",
+              "frontends/wecom",
+              "frontends/dingtalk",
+              "frontends/feishu",
+              "frontends/desktop-pet"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "메모리 & SOP",
+        "icon": "database",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "memory/overview",
+              "memory/why-this-matters",
+              "memory/l0-l4-layers"
+            ]
+          },
+          {
+            "group": "메타 SOP — 사고방식 헌법",
+            "pages": [
+              "memory/sops/memory-management",
+              "memory/sops/plan-mode",
+              "memory/sops/verify",
+              "memory/sops/supervisor",
+              "memory/sops/subagent",
+              "memory/sops/memory-cleanup"
+            ]
+          },
+          {
+            "group": "자율·스케줄",
+            "pages": [
+              "memory/sops/autonomous-operation",
+              "memory/sops/task-planning",
+              "memory/sops/scheduled-task",
+              "memory/sops/github-contribution"
+            ]
+          },
+          {
+            "group": "도메인 SOP — 도구 함정 모음",
+            "pages": [
+              "memory/sops/tmwebdriver",
+              "memory/sops/web-setup",
+              "memory/sops/vision",
+              "memory/sops/ljqctrl",
+              "memory/sops/procmem-scanner"
+            ]
+          },
+          {
+            "group": "Helper 모듈",
+            "pages": [
+              "memory/helpers/overview",
+              "memory/helpers/keychain",
+              "memory/helpers/adb-ui",
+              "memory/helpers/ocr-ui-detect",
+              "memory/helpers/vision-api-template"
+            ]
+          },
+          {
+            "group": "Skill & 영구 메모리",
+            "pages": [
+              "memory/skill-search",
+              "memory/persistent/global-mem",
+              "memory/persistent/global-insight",
+              "memory/persistent/l4-archive"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "레퍼런스",
+        "icon": "square-terminal",
+        "groups": [
+          {
+            "group": "API",
+            "pages": [
+              "reference/atomic-tools",
+              "reference/llmcore",
+              "reference/agentmain",
+              "reference/tmwebdriver",
+              "reference/tools-schema"
+            ]
+          },
+          {
+            "group": "런타임",
+            "pages": [
+              "reference/cli-flags",
+              "reference/runtime-overrides"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "더 알아보기",
+        "icon": "book-open",
+        "groups": [
+          {
+            "group": "Resources",
+            "pages": [
+              "resources/technical-report",
+              "resources/self-bootstrap",
+              "resources/comparison",
+              "resources/changelog",
+              "resources/contributing"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/dkmin/GenericAgent"
+    }
+  }
+}

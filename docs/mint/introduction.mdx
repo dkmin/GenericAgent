@@ -1,0 +1,56 @@
+---
+title: "GenericAgent — 3K줄로 키우는 자가진화 에이전트"
+description: "9개 atomic tool과 ~100줄 Agent Loop, 계층형 메모리로 시간이 지날수록 능력이 늘어나는 미니멀 에이전트 프레임워크."
+sidebarTitle: "Introduction"
+icon: "house"
+---
+
+**GenericAgent**는 약 3,000줄짜리 자가진화형 자율 에이전트 프레임워크입니다. 9개의 atomic tool과 100줄 남짓한 Agent Loop만으로 LLM이 로컬 컴퓨터를 시스템 레벨에서 제어합니다 — 브라우저, 터미널, 파일시스템, 키보드/마우스, 화면, 모바일(ADB)까지.
+
+> **설계 철학**: 스킬을 미리 심지 마라. 진화시켜라.
+
+새 작업을 풀 때마다 GenericAgent는 실행 경로를 SOP로 결정체화해서 메모리에 적습니다. 오래 쓸수록 **당신만의 스킬 트리**가 자라납니다.
+
+## 어디부터 시작할까요?
+
+<CardGroup cols={2}>
+  <Card title="5분 Quickstart" icon="rocket" href="/quickstart">
+    설치 → API 키 → 첫 작업까지 5분.
+  </Card>
+  <Card title="핵심 개념" icon="lightbulb" href="/concepts/overview">
+    왜 3K줄인가, 왜 자가진화인가 — 철학부터.
+  </Card>
+  <Card title="메모리 & SOP" icon="database" href="/memory/overview">
+    자가진화의 증거 — 16개 SOP가 어떻게 굳어졌는가.
+  </Card>
+  <Card title="레퍼런스" icon="square-terminal" href="/reference/atomic-tools">
+    9개 atomic tool과 런타임 API.
+  </Card>
+</CardGroup>
+
+## 다른 에이전트와 무엇이 다른가?
+
+| 항목 | GenericAgent | 일반적인 에이전트 |
+|---|---|---|
+| 코드 베이스 | **~3K 줄** | 수만 줄 |
+| 컨텍스트 윈도우 | **`<30K`** | 200K~1M |
+| 스킬 획득 | 사용 중 자동 결정체화 | 사전 주입 필요 |
+| 새 도메인 진입 | atomic tool 조합 + 메모리 | 새 도구 추가 |
+
+<Tip>
+  이 레포 자체가 자가진화의 증명입니다 — Git 설치부터 모든 커밋 메시지까지 GenericAgent가 자율적으로 수행했습니다. 작가는 터미널을 한 번도 열지 않았습니다. → [Self-Bootstrap 이야기](/resources/self-bootstrap)
+</Tip>
+
+## 다음 단계
+
+<Steps>
+  <Step title="Quickstart 따라가기">
+    [5분 Quickstart](/quickstart)에서 첫 작업을 시켜보세요.
+  </Step>
+  <Step title="자가진화 메커니즘 이해">
+    [Self-Evolution](/concepts/self-evolution)을 읽고 왜 이 구조인지 파악하세요.
+  </Step>
+  <Step title="자기만의 SOP 작성">
+    [Write your SOP](/guides/write-your-sop)로 에이전트에게 새로운 일을 가르치세요.
+  </Step>
+</Steps>

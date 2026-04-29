@@ -1,0 +1,77 @@
+---
+title: "LLM 키 꽂기 (mykey.py)"
+description: "Claude / GPT / Gemini / Kimi 등 네이티브 LLM 세션 설정과 페일오버 구성."
+sidebarTitle: "Configure LLM"
+icon: "key"
+---
+
+GenericAgent는 `mykey.py`의 변수 이름으로 세션 클래스를 자동 매핑합니다.
+
+| 변수명 키워드 | 매핑되는 세션 클래스 |
+|---|---|
+| `native` + `claude` | NativeClaudeSession (Anthropic) |
+| `native` + `oai` | NativeOAISession (OpenAI 호환) |
+| `mixin` | MixinSession (페일오버) |
+
+## 단일 세션
+
+<CodeGroup>
+```python OpenAI
+native_oai_config = {
+    'name': 'gpt',
+    'apikey': 'sk-...',
+    'apibase': 'https://api.openai.com/v1',
+    'model': 'gpt-5.4-mini',
+    'api_mode': 'responses',
+    'reasoning_effort': 'medium',
+}
+```
+
+```python Anthropic
+native_claude_config = {
+    'name': 'claude',
+    'apikey': 'sk-ant-...',
+    'apibase': 'https://api.anthropic.com',
+    'model': 'claude-opus-4-7[1m]',
+    'thinking_type': 'adaptive',
+}
+```
+
+```python Gemini (OpenAI 호환)
+native_oai_config_gemini = {
+    'name': 'gemini',
+    'apikey': '...',
+    'apibase': 'https://generativelanguage.googleapis.com/v1beta/openai',
+    'model': 'gemini-2.5-pro',
+    'api_mode': 'chat_completions',
+}
+```
+</CodeGroup>
+
+## 페일오버 (Mixin)
+
+여러 세션을 순차 시도합니다.
+
+```python
+mixin_config = {
+    'llm_nos': ['claude', 'gpt'],
+    'max_retries': 5,
+    'base_delay': 0.5,
+}
+```
+
+## 런타임 변경
+
+REPL/UI에서 `/session.<attr>=<val>`로 즉시 바꿀 수 있습니다.
+
+```text
+/session.reasoning_effort=high
+/session.thinking_type=adaptive
+/session.temperature=0.3
+```
+
+자세한 동작은 [Runtime Overrides](/reference/runtime-overrides)를 참고하세요.
+
+<Warning>
+  Native API의 `tool` 필드를 직접 사용합니다 — 호환성 향상 모드를 쓰는 일부 프록시는 동작하지 않을 수 있습니다.
+</Warning>

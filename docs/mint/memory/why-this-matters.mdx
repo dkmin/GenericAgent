@@ -1,0 +1,60 @@
+---
+title: "왜 폴더 하나가 GA의 핵심인가"
+sidebarTitle: "Why This Matters"
+description: "atomic 9개 도구 + memory/ — 자가진화의 모든 가능성은 이 폴더에 있다"
+icon: "lightbulb"
+---
+
+## 언제 쓰는가
+"왜 GenericAgent는 도구를 늘리지 않는가?", "어떻게 시간이 지나면서 똑똑해지는가?"가 궁금할 때.
+
+## 작동 원리 (Why)
+
+대부분의 에이전트는 능력을 늘리려고 **도구를 추가**합니다. 도구가 100개가 되면 LLM은 어떤 도구를 언제 써야 할지 헷갈립니다 (도구 폭발 문제).
+
+GenericAgent의 답은 다릅니다:
+
+<Note>
+도구는 9개로 고정. 능력은 `memory/` 안의 SOP·Helper로 늘립니다. 새 능력 = 새 .md/.py 파일.
+</Note>
+
+## 세 가지 설계 원칙
+
+### 1. Action-Verified Only
+L1/L2/L3에 기록되는 모든 정보는 **성공한 도구 호출 결과**여야 합니다. 추측 금지.
+
+> **No Execution, No Memory.** (행동 없이 메모리 없음)
+
+### 2. 존재성 인코딩 (Existence Encoding)
+LLM 자체가 압축기 + 디코더입니다. L1은 단지 "어떤 종류의 지식이 존재한다"는 것만 알려주면 되고, LLM이 tool call로 깊은 내용을 가져옵니다.
+
+### 3. 최소 충분 포인터
+상위 계층은 하위 계층을 식별할 수 있는 **최단 식별자**만 둡니다. 한 단어라도 더하면 중복.
+
+## Self-Bootstrap 과의 연결
+
+`memory/` 폴더는 자기진화의 무대입니다:
+
+1. Agent가 작업을 수행하다 함정에 빠짐
+2. 함정 회피법을 깨달음 → 새 SOP를 `memory/`에 작성
+3. L1 (`global_mem_insight.txt`)에 트리거 단어 한 줄 추가
+4. **다음 세션부터 그 함정에 다시 빠지지 않음**
+
+이게 자가진화의 코어 루프입니다. 코드 변경 0줄, 능력 +1.
+
+## 폴더가 곧 페르소나
+
+```
+memory/  ← 이 폴더를 통째로 갈아끼우면, 같은 GenericAgent가 다른 에이전트가 됨
+```
+
+같은 atomic tool 9개 위에서, `memory/`만 다르면:
+- 게임 자동화 에이전트
+- 데스크톱 비서
+- 메신저 봇
+- 연구 보조
+
+## 관련
+- [L0~L4 계층 도식](/memory/l0-l4-layers)
+- [Self-Evolution 철학](/concepts/self-evolution)
+- [Self-Bootstrap 가이드](/resources/self-bootstrap)

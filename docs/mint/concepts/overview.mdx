@@ -1,0 +1,59 @@
+---
+title: "About GenericAgent의 미니멀리즘"
+sidebarTitle: "About 미니멀리즘"
+description: "왜 3K줄인가 — 도구를 늘리지 않고 SOP를 늘리는 철학을 이해합니다."
+icon: "compass"
+---
+
+## 3K줄의 시드 코드
+
+GenericAgent는 핵심 코드가 약 **3,000줄**에 불과합니다. 이 안에 LLM이 로컬 컴퓨터의 브라우저, 터미널, 파일시스템, 키보드/마우스, 화면 비전, 모바일(ADB)까지 제어할 수 있는 모든 권한이 들어있습니다.
+
+```text
+agent_loop.py     ~123줄   에이전트 루프 (turn 관리 · tool dispatch)
+ga.py             ~560줄   핸들러 · 메모리 인젝션 · 시스템 프롬프트 조립
+agentmain.py      ~268줄   세션 진입점
+llmcore.py        ~982줄   LLM 어댑터 (Claude/Gemini/Kimi/MiniMax)
+```
+
+비결은 단순합니다. **도구 개수를 늘리는 대신, 메모리에 SOP를 누적합니다.**
+
+## 핵심 철학
+
+<CardGroup cols={2}>
+  <Card title="Don't preload skills — evolve them" icon="seedling">
+    능력을 사전에 주입하지 않습니다. 처음 푼 작업의 실행 경로를 결정체화(crystallize)해 메모리에 적습니다. 다음번엔 한 줄로 호출됩니다.
+  </Card>
+  <Card title="Atomic over Composite" icon="atom">
+    9개의 원자 도구만 둡니다. "WeChat 메시지 읽기" 같은 합성 도구는 만들지 않습니다. 도메인 확장은 SOP + helper 모듈로 처리합니다.
+  </Card>
+  <Card title="Hierarchical Memory" icon="layer-group">
+    L0~L4 계층형 메모리가 매 턴 필요한 SOP만 컨텍스트에 로드합니다. 그래서 컨텍스트 윈도우가 30K 미만으로 유지됩니다.
+  </Card>
+  <Card title="Action-Verified Axioms" icon="shield-check">
+    메모리에 기록되는 모든 사실은 **성공한 도구 호출 결과**에서 비롯됩니다. 추측은 메모리에 들어가지 않습니다.
+  </Card>
+</CardGroup>
+
+## 왜 3K줄인가
+
+다른 에이전트 프레임워크는 도구를 늘리는 방향으로 진화했습니다. "Gmail 보내기 도구", "WeChat 메시지 도구", "주식 스크리닝 도구"… 결과적으로 코드는 늘어나지만 새 도메인을 만나면 결국 새 도구를 또 만들어야 합니다.
+
+GenericAgent는 반대로 갑니다. **도구는 9개로 고정**하고, 새 도메인을 만나면 에이전트가 스스로 SOP 마크다운을 작성해 `memory/`에 저장합니다. 이 SOP는 다음번 동일 트리거에서 자동 호출됩니다. 코드 베이스는 늘지 않고, 능력만 늡니다.
+
+## 더 깊이 들어가기
+
+<CardGroup cols={2}>
+  <Card title="Atomic Tools" icon="wrench" href="/concepts/atomic-tools">
+    9개 원자 도구의 시그니처와 use case
+  </Card>
+  <Card title="Agent Loop" icon="arrows-rotate" href="/concepts/agent-loop">
+    100줄짜리 루프가 책임지는 4가지
+  </Card>
+  <Card title="Self-Evolution" icon="dna" href="/concepts/self-evolution">
+    탐색 → 결정체화 → 즉답 사이클
+  </Card>
+  <Card title="Memory Hierarchy" icon="database" href="/concepts/memory-hierarchy">
+    L0~L4 계층의 영속성과 결정체화 규칙
+  </Card>
+</CardGroup>

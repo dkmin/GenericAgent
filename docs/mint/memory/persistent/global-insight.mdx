@@ -1,0 +1,68 @@
+---
+title: "L1 — global_mem_insight.txt"
+sidebarTitle: "global_insight"
+description: "≤30줄 인덱스 — 매 라운드 시스템 프롬프트에 포함되는 능력 카탈로그"
+icon: "compass"
+---
+
+## 언제 쓰는가
+이 파일은 **매 라운드 시스템 프롬프트에 포함**됩니다. 그래서 가장 비싼 메모리 — 한 단어가 매 라운드마다 token 비용.
+
+## 작동 원리 (Why)
+L1의 본질: **가능한 가장 짧은 단어 수로, 어떤 상황에서 어떤 메모리가 사용 가능한지(존재성)를 표현**. LLM이 이걸 보고 "아, 이 작업에는 X 메모리가 있구나"를 알게 되면, tool call로 깊은 내용을 직접 가져옵니다.
+
+## 형식 예시 (실제 파일)
+
+```text
+# [Global Memory Insight]
+Browser special ops: tmwebdriver_sop(file upload/image search/PDF blob/...)
+Keyboard & Mouse: ljqCtrl_sop(no pyautogui/activate first)
+Screenshot/Vision: ocr/vision_sop | No fullscreen capture, prefer window
+Scheduling: scheduled_task_sop | Autonomous: autonomous_operation_sop
+Mobile: adb_ui.py
+
+L0(META-SOP): memory_management_sop
+L2: currently empty
+L3: memory_cleanup_sop | skill_search | ui_detect.py | ...
+L4: L4_raw_sessions/
+
+[RULES]
+1. Search first: must use es for filename search ...
+2. Cross-verify: never trust summaries ...
+...
+```
+
+## 두 종류 콘텐츠
+
+1. **존재성 포인터**: L2/L3 지식을 가리키는 가장 짧은 트리거 단어
+2. **행동 규칙 (RULES)**: 알려주지 않으면 저지르는 실수 — 치명적·고빈도만
+
+통일된 ROI로 평가:
+```
+ROI = (이 단어들 안 둘 때의 실수 확률 × 비용) / 매 라운드 단어 비용
+```
+
+## RULES 두 종류
+
+- **레드라인 (치명형)**: 위반 시 프로세스 종료/시스템 크래시. 예: `무조건 python kill 금지(자기 자신을 죽임)`
+- **레드라인 (은밀형)**: 위반해도 에러 없으나 잘못된 결과. 예: `검색은 google, baidu 금지`
+- **고빈도 실수 포인트**: 잊기 쉬운 핵심 제약
+
+## 자주 빠지는 함정
+
+<Warning>
+- **하드 제약 ≤ 30줄**. 희망 < 1k tokens.
+- **비밀번호, API Key 기록 엄금**
+- **"How to" 또는 상세 설명 작성 금지** (특정 작업 세부는 L3에)
+- **로그 기록 작성 더더욱 엄금**
+- **단어 수준 patch만 허용, overwrite 금지** — 잘못 압축하면 매 라운드 복리 손해
+</Warning>
+
+<Tip>
+괄호 안 트리거 단어는 **직관에 반하는 경우만** 추가. `proxy-pool/(代理池)` 같은 번역, `opencli_sop(66站点CLI,复用Chrome session)` 같은 구현 세부는 모두 낭비.
+</Tip>
+
+## 관련
+- [Memory Management SOP](/memory/sops/memory-management)
+- [Memory Cleanup SOP](/memory/sops/memory-cleanup)
+- [L0~L4 계층 도식](/memory/l0-l4-layers)

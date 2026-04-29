@@ -1,0 +1,86 @@
+---
+title: "ljqCtrl SOP"
+sidebarTitle: "ljqCtrl"
+description: "키보드/마우스 시뮬레이션 — 항상 물리 좌표, pyautogui 금지"
+icon: "mouse-pointer"
+---
+
+## 언제 쓰는가
+Windows에서 키보드/마우스 시뮬레이션이 필요할 때. 브라우저는 TMWebDriver가 우선이지만 그게 안 되는 경우 (네이티브 앱, 게임, 시스템 다이얼로그) ljqCtrl 사용.
+
+## 작동 원리 (Why)
+`pyautogui`는 High-DPI에서 좌표가 어긋나고, isTrusted=false 같은 제약이 있어 일부 앱이 거부합니다. `ljqCtrl`은 **물리 픽셀 좌표** + 저수준 입력으로 안정적.
+
+<Warning>
+**Working Checkpoint 필수**: `ljqCtrl은 항상 물리 좌표 사용｜pyautogui 금지｜조작 전 gw로 창 활성화`
+</Warning>
+
+## API 빠른 참조
+
+| API | 설명 |
+|---|---|
+| `ljqCtrl.dpi_scale` | 스케일 계수 (논리 너비 / 물리 너비) |
+| `ljqCtrl.SetCursorPos(z)` | 마우스 이동 (논리 좌표) |
+| `ljqCtrl.Click(x, y=None)` | 클릭. `Click((x,y))` 또는 `Click(x,y)` |
+| `ljqCtrl.Press(cmd, staytime=0)` | 키 입력. 예: `Press('ctrl+c')` |
+| `ljqCtrl.FindBlock(fn, wrect=None, threshold=0.8)` | 이미지 찾기 → `((cx,cy), is_found)` |
+| `ljqCtrl.MouseDClick(staytime=0.05)` | 더블클릭 |
+
+## 환경 로딩
+
+```python
+import sys, os, pygetwindow as gw
+sys.path.append("../memory")
+import ljqCtrl
+```
+
+## 핵심: High-DPI 물리 좌표 환산
+
+`Click/MoveTo` 인터페이스는 **물리 픽셀 좌표**를 받습니다. `pygetwindow`로 얻은 위치는 **논리 좌표**이므로 변환 필요:
+
+```python
+# 환산 공식
+물리 좌표 = 논리 좌표 / ljqCtrl.dpi_scale
+```
+
+## 사용 예시
+
+```python
+import sys, pygetwindow as gw
+sys.path.append("../memory")
+import ljqCtrl
+
+# 1. 창 활성화
+win = gw.getWindowsWithTitle('微信')[0]
+win.restore(); win.activate()
+
+# 2. 좌표 계산 + 변환
+lx, ly = 100, 200  # 논리 좌표
+px, py = lx / ljqCtrl.dpi_scale, ly / ljqCtrl.dpi_scale
+
+# 3. 클릭
+ljqCtrl.Click(px, py)
+
+# 4. 텍스트 입력 (TypeText 없음 — 클립보드 우회)
+import pyperclip
+pyperclip.copy('텍스트')
+ljqCtrl.Press('ctrl+v')
+```
+
+## 자주 빠지는 함정
+
+<Warning>
+- **항상 물리 좌표**: 논리 좌표 전달 금지. 모든 상대 오프셋도 `/dpi_scale`.
+- **창 좌표 변환 함정**: `win32gui.GetWindowRect(hwnd)`는 타이틀바·테두리 포함, 스크린샷은 클라이언트 영역. **`win32gui.ClientToScreen(hwnd, (0,0))`**로 클라이언트 원점 화면 좌표 얻고 스크린샷 좌표 더함.
+- **win32 DPI 함정**: `SetProcessDPIAware()` 호출 안 하면 `GetWindowRect/ClientToScreen/GetClientRect`가 **논리 좌표** 반환. 일관되게 `/dpi_scale` 처리하거나 먼저 `SetProcessDPIAware()` 호출 후 raw 물리 좌표만 사용. **논리/물리 혼용 금지**.
+- **TypeText/SendKeys 없음**: 입력란에 텍스트 넣을 때 `pyperclip.copy(...) + ljqCtrl.Press('ctrl+v')`.
+- **물리 검증**: 시뮬레이션 전 창이 `activate()`로 전면에 와있는지 반드시 확인.
+</Warning>
+
+<Tip>
+3840(4K)는 개발 머신 예시일 뿐, 실제 물리 경계는 시스템 환경이 결정 — 코드에서 항상 `dpi_scale`로 동적 계산.
+</Tip>
+
+## 관련
+- [Vision SOP](/memory/sops/vision) (창 영역 캡처)
+- [TMWebDriver SOP](/memory/sops/tmwebdriver) (브라우저는 우선 이쪽)

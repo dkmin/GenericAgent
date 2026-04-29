@@ -1,0 +1,49 @@
+---
+title: "첫 작업 — 스크린샷 찍고 요약하기"
+description: "GenericAgent에게 처음 시키기 좋은 작업 3가지와, 두 번째 호출에서 일어나는 일."
+sidebarTitle: "First Task"
+icon: "play"
+---
+
+## 추천 첫 작업 3가지
+
+<Tabs>
+  <Tab title="파일 시스템">
+    ```text
+    이 디렉토리의 .py 파일 중 가장 큰 5개를 라인 수와 함께 알려줘
+    ```
+    → atomic tool: `shell` 한 번이면 끝. SOP 결정체화 거의 없음.
+  </Tab>
+  <Tab title="브라우저">
+    ```text
+    https://news.ycombinator.com 첫 화면에서 점수 100 이상 글 제목만 뽑아줘
+    ```
+    → 첫 실행: [`web_setup_sop`](/memory/sops/web-setup) 진입 → TMWebDriver 셋업. 두 번째 실행부터: 0.5초.
+  </Tab>
+  <Tab title="비전">
+    ```text
+    화면을 캡처하고 지금 열려있는 창들을 한국어로 요약해줘
+    ```
+    → atomic tool: `screenshot` + Vision API. [`vision_sop`](/memory/sops/vision) 사전 규칙 자동 적용.
+  </Tab>
+</Tabs>
+
+## 두 번째 호출에서 일어나는 일
+
+<Steps>
+  <Step title="첫 호출 — 탐색">
+    GenericAgent는 도구를 시도하고, 실패하면 SOP를 검색하고, 새 패턴을 만듭니다.
+  </Step>
+  <Step title="결정체화">
+    성공한 실행 경로가 메모리(`global_mem.txt` 또는 새 `*_sop.md`)에 굳어집니다.
+  </Step>
+  <Step title="두 번째 호출 — 즉답">
+    같은 작업이 들어오면 SOP를 직접 호출. 토큰·시간 모두 90% 절감.
+  </Step>
+</Steps>
+
+자세한 메커니즘은 [Self-Evolution](/concepts/self-evolution)에서 다룹니다.
+
+## 그래서 이게 왜 중요한가?
+
+다른 에이전트는 "스킬을 사전 주입"하는 모델입니다. GenericAgent는 **사용자별로 스킬 트리가 달라집니다** — 당신이 자주 시키는 일이 자연스럽게 빠르고 정확해집니다.

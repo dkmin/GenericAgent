@@ -1,0 +1,30 @@
+---
+title: "기술 리포트 (arXiv)"
+sidebarTitle: "Technical Report"
+description: "GenericAgent: A Token-Efficient Self-Evolving LLM Agent via Contextual Information Density Maximization."
+icon: "file-lines"
+---
+
+## 핵심 메시지
+
+GenericAgent의 설계 철학은 **컨텍스트 정보 밀도(Contextual Information Density) 의 최대화**입니다. 200K~1M 컨텍스트를 사용하는 다른 에이전트들과 달리, GenericAgent는 **30K 미만 컨텍스트**로 동등하거나 더 높은 작업 성공률을 달성합니다.
+
+> **노이즈가 적을수록 환각이 줄고 성공률은 오히려 올라간다 — 비용은 한 자릿수로.**
+
+## 자료
+
+- 📄 **arXiv**: [2604.17091](https://arxiv.org/abs/2604.17091)
+- 📘 **PDF**: [`assets/GenericAgent_Technical_Report.pdf`](https://github.com/dkmin/GenericAgent/blob/main/assets/GenericAgent_Technical_Report.pdf)
+- 💻 **실험 재현**: [JinyiHan99/GA-Technical-Report](https://github.com/JinyiHan99/GA-Technical-Report)
+- 📚 **튜토리얼(중)**: [datawhalechina/hello-generic-agent](https://datawhalechina.github.io/hello-generic-agent/)
+
+## 논문이 다루는 것
+
+1. **9개 원자 도구 설계 원칙** — task-specific 도구 폭발이 아닌, OS-level 원자 동작에서 출발하는 합성 가능한 능력 빌딩.
+2. **계층형 메모리 (L0–L4)** — Meta Rules → Insight Index → Global Facts → Task Skills → Session Archive 의 5계층이 컨텍스트 정보 밀도를 어떻게 끌어올리는가.
+3. **자가진화 메커니즘** — 매 작업의 실행 경로를 Skill로 결정화(crystallize)하고, 다음 동종 작업에서는 한 줄로 재호출 가능하게 만드는 학습 루프.
+4. **벤치마크 결과** — 토큰 효율 기준의 성공률 비교.
+
+## 발표 시점
+
+`2026-04-21` 자 README "📅 Latest News" 항목에서 공식 공개됨.

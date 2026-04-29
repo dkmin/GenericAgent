@@ -1,0 +1,88 @@
+---
+title: "멀티 LLM 페일오버 구성"
+description: "MixinSession으로 여러 LLM 백엔드를 우선순위 큐로 묶어 자동 폴백·복귀(spring-back)를 구성합니다."
+sidebarTitle: "Mixin Failover"
+icon: "shuffle"
+---
+
+<Note>MixinSession은 `mykey.py`의 `mixin_config` 한 블록만 정의하면 됩니다. `agentmain.py`는 변수명에 `mixin`이 들어간 dict를 자동으로 인식해 `MixinSession`으로 감쌉니다.</Note>
+
+## mixin_config 예시
+
+```python mykey.py
+mixin_config = {
+    'llm_nos': ['cc-relay-1', 'cc-relay-2', 'gpt-native'],  # 우선순위 순
+    'max_retries': 10,    # 전체 rotation의 총 재시도 상한
+    'base_delay': 0.5,    # 지수 백오프 시작 딜레이 (초)
+    'spring_back': 300,   # 백업으로 옮긴 후 N초 뒤 1순위 복귀 시도
+}
+```
+
+`llm_nos`의 각 문자열은 다른 native session 설정의 `name` 필드와 일치해야 합니다. 정수 인덱스도 허용됩니다.
+
+<Warning>제약: 참조하는 모든 session은 **전부 Native** (`NativeClaudeSession` / `NativeOAISession` 혼용 OK) 이거나 **전부 비-Native** 이어야 합니다. Native와 비-Native를 섞으면 `MixinSession.__init__`이 assert로 즉시 실패합니다.</Warning>
+
+## 동작 원리
+
+`llmcore.py`의 `MixinSession` (870–929번째 줄)을 그대로 풀어 설명합니다.
+
+<Steps>
+  <Step title="primary 선택">
+    `_pick()`이 현재 인덱스를 반환합니다. 백업으로 전환된 상태에서 `spring_back` 초가 지났으면 다시 0번(=1순위)을 시도합니다.
+  </Step>
+  <Step title="raw_ask 가로채기">
+    `MixinSession`은 1순위 session의 `raw_ask`만 자기 `_raw_ask`로 패치합니다. 호출은 항상 1순위로 들어오지만 내부에서 실제 backend를 라우팅합니다.
+  </Step>
+  <Step title="실패 감지와 회전">
+    각 chunk의 prefix가 `!!!Error:` 또는 `[Error:`로 시작하면 실패로 간주, 다음 인덱스로 이동합니다. 한 바퀴를 다 돌면 `base_delay * 1.5^round` (최대 30초) 백오프 후 재시도.
+  </Step>
+  <Step title="부분 실패와 즉시 전환">
+    스트림이 `[!!! 流异常中断`으로 끊긴 경우 다음 호출은 자동으로 다음 인덱스부터 시작 — `Partial failure, next call → sN` 로그가 남습니다.
+  </Step>
+  <Step title="브로드캐스트 속성">
+    `system / tools / temperature / max_tokens / reasoning_effort / history`를 MixinSession에 set하면 모든 자식 session에 전파됩니다. `tools`는 Native Claude session에 한해 자동으로 OAI→Claude 포맷으로 변환됩니다.
+  </Step>
+</Steps>
+
+## 런타임 LLM 전환
+
+UI 사이드바 드롭다운(stapp.py)이나 REPL의 `/llms` 명령으로 활성 라인을 바꿀 수 있습니다. 이건 `MixinSession`의 `_cur_idx`를 직접 갱신하므로 다음 호출부터 즉시 반영됩니다.
+
+```bash
+# REPL 예시
+/llms                    # 사용 가능한 라인 목록
+/session.reasoning_effort=high   # 현재 활성 라인의 reasoning effort 변경
+```
+
+## 권장 구성
+
+<Tabs>
+  <Tab title="Claude 위주">
+    ```python
+    mixin_config = {
+        'llm_nos': ['cc-relay-1', 'anthropic-direct', 'crs-claude-max'],
+        'max_retries': 10,
+        'base_delay': 0.5,
+        'spring_back': 300,
+    }
+    ```
+
+    1순위는 가장 싼 relay, 2·3순위로 직연·CRS를 두면 무중단에 가깝습니다.
+  </Tab>
+  <Tab title="Claude + GPT 혼합">
+    ```python
+    mixin_config = {
+        'llm_nos': ['cc-relay-1', 'gpt-native'],
+        'max_retries': 6,
+        'base_delay': 1.0,
+    }
+    ```
+
+    Native 그룹 안에서는 Claude/OAI 혼용 가능. 도구 포맷은 자동 변환됩니다.
+  </Tab>
+  <Tab title="단일 라인 (mixin 없이)">
+    `mixin_config`를 정의하지 않고 단일 native session 하나만 두면 됩니다. 이 경우 backend는 그 session 자체이며, 재시도는 session의 `max_retries`로 제어됩니다.
+  </Tab>
+</Tabs>
+
+<Tip>`spring_back`을 짧게(예: 60초) 두면 1순위 복귀가 빠르지만 같은 장애가 또 일어났을 때 전환이 잦아집니다. 300–600초가 무난합니다.</Tip>

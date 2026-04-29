@@ -1,0 +1,78 @@
+---
+title: "자율 행동 SOP"
+sidebarTitle: "Autonomous Operation"
+description: "사용자 오프라인 시 가치 작업을 스스로 골라 실행하고 보고서로 갚음"
+icon: "robot"
+---
+
+## 언제 쓰는가
+사용자가 자율 행동을 허가했을 때. 환경에 부작용을 주지 않는 한 자유롭게 진행.
+
+## 작동 원리 (Why)
+사용자가 자리를 비웠을 때 idle하지 않고 **메모리 갱신·환경 발견·도구 발굴**로 능력 트리를 키우기 위한 SOP. 핵심 가치 공식:
+
+> **「AI 학습 데이터로 커버되지 않는 것」 × 「향후 협업에 지속적으로 도움이 되는 것」**
+
+## 시작 흐름
+
+```python
+# 2단계: 이력 파악
+from autonomous_operation_sop.helper import *
+print(get_history(40))   # 중복 회피
+print(get_todo())        # 할 일 확인
+```
+
+체크포인트: `자율행동｜마무리 시 SOP 재독 | complete_task(tasktitle, historyline, report_path)`
+
+## 작업 선택
+
+- 미완료 TODO 있음 → **하나만** 골라 바로 실행
+- TODO 없음 → `task_planning.md` 읽고 계획만 (다음 회차 실행)
+- 같은 하위 작업 두 번 연속 선택 금지
+
+## 실행
+
+- 라운드 30회 이내, 작은 단위로 빠르게, 탐색하면서 실험
+- 임시 스크립트로 가설 검증. 읽기만 하고 결론 내지 말고, **완전 검증 후 보고서**
+- 실패해도 실험 과정·결과 기록. 실패 보고서도 가치 있음
+- 결정 필요한 문제는 보고서에 기록, 멈추지 말 것
+
+## 마무리 (4가지 모두 필수)
+
+```python
+# 0. SOP 재독
+# 1. cwd에 보고서 작성 (메모리 갱신 제안 첨부 가능)
+# 2. 자동 번호 매김 + history prepend
+from autonomous_operation_sop.helper import *
+complete_task(tasktitle, historyline, report_path)
+# historyline 형식: "유형 | 주제 | 결론" (한 줄 엄격)
+
+# 3. TODO 완료 항목 [x] 표시
+set_todo()
+
+# 4. 종료
+```
+
+<Warning>
+**경로 주의**: `autonomous_reports`는 temp/ 아래. `./autonomous_reports/`로 접근. **절대** `../memory/autonomous_reports/`나 `../autonomous_reports/`가 아님!
+</Warning>
+
+## 권한 경계
+
+| 등급 | 범위 |
+|---|---|
+| 승인 불필요 | 읽기 전용 탐색, cwd 내 쓰기/스크립트 실험 |
+| 보고서로 검토 요청 | global_mem / memory SOP 수정, 소프트웨어 설치, 외부 API 호출, 비임시 파일 삭제 |
+| 절대 금지 | 비밀키 읽기, 핵심 코드베이스 수정, 비가역 위험 작업 |
+
+## 자주 빠지는 함정
+
+<Warning>
+- 보고서 경로 오류 (`../memory/autonomous_reports/` 등) — `./autonomous_reports/`만 사용
+- 사용자 오프라인이라고 멈추지 말 것 — 결정 필요 시 보고서에 기록만
+- 같은 하위 작업 두 번 연속 선택 금지
+</Warning>
+
+## 관련
+- [작업 계획 모드](/memory/sops/task-planning)
+- [Scheduled Task SOP](/memory/sops/scheduled-task)

@@ -1,0 +1,48 @@
+---
+title: "9개 원자 도구"
+sidebarTitle: "Atomic Tools"
+description: "GenericAgent의 모든 능력은 9개 원자 도구에서 시작합니다."
+icon: "wrench"
+---
+
+`assets/tools_schema.json` 에 정의된 도구 스키마입니다. LLM은 이 9개로만 외부 세계와 상호작용합니다.
+
+## 실행 / 파일 (4)
+
+| 도구 | 설명 |
+|---|---|
+| `code_run` | 임의 코드 실행 (Python 우선, PowerShell/bash 가능). `script` 인자 또는 응답의 코드 블록을 실행합니다. |
+| `file_read` | 파일 읽기. `start`/`count`/`keyword` 로 범위 또는 검색. |
+| `file_patch` | 유일한 `old_content` 를 `new_content` 로 교체. 정확한 공백/들여쓰기 일치 필요. |
+| `file_write` | 파일 생성/덮어쓰기/append/prepend. `<file_content>...</file_content>` 본문 사용. |
+
+## 웹 (2)
+
+| 도구 | 설명 |
+|---|---|
+| `web_scan` | 단순화된 HTML + 탭 목록. 숨김/플로팅/가려진 요소 제거. |
+| `web_execute_js` | JS 실행. `switch_tab_id` 로 탭 전환 가능. |
+
+## 메모리 / 사용자 (3)
+
+| 도구 | 설명 |
+|---|---|
+| `update_working_checkpoint` | 단기 작업 메모(`<200` 토큰). 매 턴 자동 주입. SOP 읽은 직후·서브태스크 전환·반복 실패 시 호출. |
+| `ask_user` | 결정·정보·블로커 발생 시 사용자에게 질문. `candidates` 로 빠른 선택지 제공. |
+| `start_long_term_update` | 장기 메모리 증류 시작. 15+ 턴 작업 종료 시 필수. |
+
+## 코드 예시
+
+LLM은 이 도구들을 (네이티브 function call 또는 `<tool_use>` 텍스트로) 호출합니다.
+
+```json
+{
+  "name": "code_run",
+  "arguments": {
+    "type": "python",
+    "script": "import sys; print(sys.version)"
+  }
+}
+```
+
+자세한 스키마 포맷은 [`tools-schema`](/reference/tools-schema) 참고.

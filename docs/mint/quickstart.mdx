@@ -1,0 +1,80 @@
+---
+title: "5분 안에 첫 작업 시키기"
+description: "저장소 클론부터 Streamlit UI에서 첫 작업을 실행하기까지 — 약 5분 소요."
+sidebarTitle: "Quickstart"
+icon: "rocket"
+---
+
+<Note>예상 소요 시간: **5분**. 미리 LLM API 키 하나(Anthropic/OpenAI/Gemini 중 택일)와 Python 3.10+가 필요합니다.</Note>
+
+## 1. 저장소 클론
+
+```bash
+git clone https://github.com/dkmin/GenericAgent.git
+cd GenericAgent
+pip install -r requirements.txt
+```
+
+## 2. LLM 키 설정
+
+`mykey_template_en.py`를 `mykey.py`로 복사하고 키를 채웁니다.
+
+<CodeGroup>
+```python OpenAI
+native_oai_config = {
+    'name': 'gpt',
+    'apikey': 'sk-...',
+    'apibase': 'https://api.openai.com/v1',
+    'model': 'gpt-5.4-mini',
+    'api_mode': 'responses',
+    'reasoning_effort': 'medium',
+}
+```
+
+```python Anthropic
+native_claude_config = {
+    'name': 'claude',
+    'apikey': 'sk-ant-...',
+    'apibase': 'https://api.anthropic.com',
+    'model': 'claude-opus-4-7[1m]',
+    'thinking_type': 'adaptive',
+}
+```
+</CodeGroup>
+
+자세한 옵션은 [Configure LLM](/configure-llm)을 참고하세요.
+
+## 3. UI 실행
+
+```bash
+python launch.pyw
+```
+
+기본 브라우저에 Streamlit UI가 뜹니다 (`http://localhost:185xx`).
+
+## 4. 첫 작업 시키기
+
+채팅 입력창에 한국어로 시켜보세요.
+
+```text
+이 디렉토리의 파일 목록을 보여주고, 가장 최근 수정된 파일 3개를 알려줘
+```
+
+처음에는 GenericAgent가 도구 호출 흐름을 만들어가는 과정을 보여줍니다. 같은 패턴의 작업을 다음에 시키면 — 메모리에 결정체화된 SOP를 바로 호출합니다.
+
+## 다음에 할 일
+
+<CardGroup cols={2}>
+  <Card title="자가진화 이해" icon="dna" href="/concepts/self-evolution">
+    왜 두 번째부터 빨라지는가
+  </Card>
+  <Card title="자율 모드 켜기" icon="robot" href="/guides/autonomous-mode">
+    30분 자리비움 = 자동 작업 진입
+  </Card>
+  <Card title="메신저 봇 연동" icon="message" href="/guides/messenger-bots">
+    Telegram·WeChat·DingTalk 프론트엔드
+  </Card>
+  <Card title="SOP 직접 쓰기" icon="pen" href="/guides/write-your-sop">
+    에이전트에게 새 일 가르치는 법
+  </Card>
+</CardGroup>

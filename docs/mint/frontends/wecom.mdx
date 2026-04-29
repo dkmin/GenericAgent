@@ -1,0 +1,37 @@
+---
+title: "WeCom (기업위챗) 봇"
+sidebarTitle: "WeCom"
+description: "기업위챗 AI 봇 SDK를 사용한 WebSocket 봇."
+icon: "comments"
+---
+
+[`frontends/wecomapp.py`](https://github.com/dkmin/GenericAgent/blob/main/frontends/wecomapp.py) 는 `wecom_aibot_sdk` 의 `WSClient` 를 사용합니다.
+
+## 진입 명령
+
+```bash
+python launch.pyw --wecom
+python frontends/wecomapp.py
+```
+
+단일 인스턴스 락은 `127.0.0.1:19531` 입니다.
+
+## 필수 설정
+
+```python
+# mykey.py
+wecom_bot_id          = '...'    # 봇 ID
+wecom_secret          = '...'    # 봇 시크릿
+wecom_allowed_users   = []       # 허용할 사용자 (비어 있으면 모두 거부)
+wecom_welcome_message = ''       # (선택) 첫 인사
+```
+
+`wecom_aibot_sdk` 패키지 설치 필요: `pip install wecom_aibot_sdk` (`wecomapp.py:28`).
+
+## 주요 기능
+
+- **WebSocket 양방향** — `WSClient` 로 메시지 수신·답신.
+- **단문 분할** — 1200자 단위로 잘라 다중 메시지 전송 (`split_limit = 1200`).
+- **AgentChatMixin 공유** — `chatapp_common.AgentChatMixin` 으로 메시지 처리 로직을 DingTalk/WeCom 가 공통화.
+- **턴 종료 훅** — `wecom_<chat_id>` 키로 `_turn_end_hooks` 에 등록.
+- **단일 인스턴스 락** — 19531 포트로 중복 실행 방지.

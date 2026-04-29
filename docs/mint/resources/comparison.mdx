@@ -1,0 +1,45 @@
+---
+title: "다른 에이전트와의 비교"
+sidebarTitle: "Comparison"
+description: "GenericAgent vs Claude Code / Codex / AutoGPT / Manus / OpenClaw."
+icon: "scale-balanced"
+---
+
+README의 "Comparison with Similar Tools" 항목과, 공개된 사실을 기반으로 한 추가 정리입니다.
+
+## 한눈 비교
+
+| 항목 | **GenericAgent** | Claude Code | OpenAI Codex CLI | AutoGPT | Manus | OpenClaw |
+|---|---|---|---|---|---|---|
+| **코드 규모** | ~3K줄 | 비공개(클라) | 비공개 | 수만 줄 | 비공개 | ~530K줄 |
+| **배포** | `pip install` + API Key | CLI + 구독 | CLI + 구독 | Docker/Python | SaaS | 다중 서비스 오케스트레이션 |
+| **브라우저 제어** | 진짜 브라우저 (로그인 보존) | MCP 플러그인 경유 | 부분 | headless | SaaS 내부 | sandbox/headless |
+| **OS 제어** | 마우스/키보드/비전/ADB | 파일 + 터미널 | 파일 + 터미널 | 셸 | 클라우드 VM | 멀티에이전트 위임 |
+| **자가진화** | ✅ Skill 자동 결정화 | ❌ 세션 간 무상태 | ❌ 세션 간 무상태 | 부분 (메모리 플러그인) | 비공개 | 플러그인 생태계 |
+| **컨텍스트** | `<30K` | 200K~1M | 200K | 모델 의존 | 비공개 | 모델 의존 |
+| **메모리 계층** | L0–L4 5계층 | CLAUDE.md (단일) | AGENTS.md (단일) | vector store | 비공개 | 비공개 |
+| **모델 락인** | 없음 (Claude/GPT/Gemini/Kimi/MiniMax) | Claude 전용 | GPT 전용 | OpenAI 위주 | 자체 | 모델 무관 |
+| **학습 곡선** | 9개 도구 외우면 끝 | CLI 명령 학습 | CLI 명령 학습 | 가파름 | 없음 (UI) | 가파름 |
+
+## 한 줄로
+
+- **vs Claude Code / Codex CLI**: 같은 "에이전트형 CLI" 스타일이지만, GenericAgent는 **모델 락인이 없고 세션 간 진화한다.** Skill이 누적된다는 점이 결정적 차이.
+- **vs AutoGPT**: AutoGPT가 "task-specific 도구를 많이 가진" 방식이라면, GenericAgent는 "원자 도구 9개를 합성하는" 방식. 결과: 코드 규모 1/10, 환각 1/N.
+- **vs Manus**: Manus는 SaaS — 사용자가 자기 환경/로그인을 양도해야 함. GenericAgent는 **로컬 우선** — 당신 PC의 로그인 세션에 직접 주입.
+- **vs OpenClaw**: 530K줄 vs 3K줄. OpenClaw는 풀스택 솔루션, GenericAgent는 시드 → 자기진화.
+
+## 어떤 사람에게 GenericAgent가 맞나
+
+| 만약... | GenericAgent가 적합 | 다른 게 적합 |
+|---|---|---|
+| 내 PC의 브라우저 로그인을 그대로 쓰고 싶다 | ✅ | Manus ❌ |
+| 모델을 자유롭게 갈아끼우고 싶다 (Claude→Gemini→Kimi) | ✅ | Claude Code ❌ |
+| 오래 쓸수록 똑똑해지는 에이전트를 원한다 | ✅ | Codex/AutoGPT ❌ |
+| 코드 베이스 전체를 1시간 안에 이해하고 싶다 | ✅ (3K줄) | OpenClaw ❌ |
+| 오늘 당장 ChatOps만 필요하다 | ⚠️ (셋업 필요) | Manus/Claude Code ✅ |
+
+## 출처
+
+- README.md "Comparison with Similar Tools"
+- `pyproject.toml` (코드 규모)
+- 본 문서 다른 페이지의 사실들

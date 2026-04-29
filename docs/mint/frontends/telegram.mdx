@@ -1,0 +1,35 @@
+---
+title: "Telegram 봇"
+sidebarTitle: "Telegram"
+description: "Telegram 채팅에서 GenericAgent를 호출하는 프론트엔드."
+icon: "telegram"
+---
+
+[`frontends/tgapp.py`](https://github.com/dkmin/GenericAgent/blob/main/frontends/tgapp.py) 는 `python-telegram-bot` 의 `ApplicationBuilder().run_polling()` 을 사용하는 long-polling 봇입니다.
+
+## 진입 명령
+
+```bash
+python launch.pyw --tg            # Streamlit + Telegram 동시 실행
+python frontends/tgapp.py         # Telegram 봇만 단독 실행
+```
+
+## 필수 설정
+
+`mykey.py` 에 다음을 추가합니다.
+
+```python
+tg_bot_token     = '123456:ABC...'   # @BotFather 에서 발급
+tg_allowed_users = [123456789]       # 허용할 Telegram user_id 목록
+# proxy = 'http://127.0.0.1:7890'    # (선택) 글로벌 HTTP 프록시
+```
+
+`tg_allowed_users` 가 비어 있으면 시작 시 경고 로그가 뜹니다 (`tgapp.py:882`). 기본 프록시는 `mykeys.get('proxy')` 만 사용하며 하드코딩된 값은 없습니다.
+
+## 주요 기능
+
+- **턴 단위 스트리밍** — `LLM Running (Turn N) ...` 마커별로 메시지를 분할해 전송하고, `<summary>` 를 한 줄 제목으로 추출합니다.
+- **MarkdownV2 안전 변환** — 코드펜스/링크/볼드 등을 토크나이즈해 Telegram 한도 내에서 자동 분할 (`_markdown_safe_segments`).
+- **`ask_user` 인라인 메뉴** — `ask_user` 도구가 `candidates` 를 주면 InlineKeyboard 로 선택 UI를 띄웁니다.
+- **레이트 리밋 처리** — `RetryAfter` 예외에 마진을 더해 자동 재시도.
+- **메뉴 명령** — `chatapp_common.TELEGRAM_MENU_COMMANDS` 가 `/new`, `/continue`, `/llm` 등을 BotCommand 로 등록합니다.

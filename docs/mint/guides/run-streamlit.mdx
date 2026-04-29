@@ -1,0 +1,61 @@
+---
+title: "Streamlit UI로 실행하기"
+description: "launch.pyw 한 번으로 Streamlit 채팅 UI와 메신저 봇·스케줄러를 함께 띄웁니다."
+sidebarTitle: "Streamlit UI"
+icon: "browser"
+---
+
+<Note>`launch.pyw`는 pywebview 창 안에서 `frontends/stapp.py`를 띄우고, 옵션 플래그로 메신저 봇과 스케줄러를 함께 기동합니다. 단독 Streamlit만 띄우려면 `streamlit run frontends/stapp.py` 도 가능합니다.</Note>
+
+## 빠른 실행
+
+```bash
+python launch.pyw           # Streamlit UI만 (포트 자동 선택)
+python launch.pyw --tg      # + Telegram Bot
+python launch.pyw --sched   # + 스케줄러
+python launch.pyw 18550     # 포트 직접 지정
+```
+
+## 옵션 플래그
+
+`launch.pyw` argparse 정의 그대로 옮긴 표입니다.
+
+| 플래그 | 설명 |
+| --- | --- |
+| `port` (위치 인자) | 미지정/`0`이면 18501–18599 중 빈 포트 자동 탐색 |
+| `--tg` | Telegram Bot 기동 (`frontends/tgapp.py`) |
+| `--qq` | QQ Bot 기동 (`frontends/qqapp.py`) |
+| `--feishu`, `--fs` | 飞书 / Lark Bot 기동 |
+| `--wecom` | 企业微信 Bot 기동 |
+| `--dingtalk`, `--dt` | DingTalk Bot 기동 |
+| `--sched` | `agentmain.py --reflect reflect/scheduler.py` 별도 프로세스로 기동 |
+| `--llm_no N` | 스케줄러가 사용할 LLM 번호 (mixin 라인 인덱스) |
+
+<Tip>봇·스케줄러 프로세스는 `atexit`로 메인 프로세스 종료 시 함께 정리됩니다.</Tip>
+
+## 포트와 윈도우 위치
+
+<Steps>
+  <Step title="포트 자동 선택">
+    `find_free_port(18501, 18599)`가 무작위 순서로 빈 포트를 시도합니다. 99개를 모두 잡고 있으면 RuntimeError가 발생합니다.
+  </Step>
+  <Step title="윈도우 크기와 위치">
+    상수는 `WINDOW_WIDTH=600, WINDOW_HEIGHT=900, RIGHT_PADDING=0, TOP_PADDING=100`. Windows에서는 화면 우측에 붙도록 `x = screen_width - WINDOW_WIDTH - RIGHT_PADDING`으로 계산합니다. 위치를 옮기고 싶으면 `launch.pyw` 상단 4개 상수만 고치면 됩니다.
+  </Step>
+  <Step title="유휴 모니터 스레드">
+    `idle_monitor`가 5초마다 페이지의 `#last-reply-time`을 읽어 30분(1800초) 이상 응답이 없으면 자율 행동 메시지를 inject 합니다. 자세한 내용은 [유휴 자율 행동 켜기](/guides/autonomous-mode)를 참고하세요.
+  </Step>
+</Steps>
+
+## stapp.py 핵심 기능
+
+`frontends/stapp.py` 사이드바(`render_sidebar` fragment)는 다음 컨트롤을 제공합니다.
+
+- **백업 라인 선택** — `agent.list_llms()`로 mixin 후보를 드롭다운에 노출, 선택 시 `agent.next_llm(idx)` 호출
+- **유휴 시간 표시** — `last_reply_time`과 현재 시각의 차를 초 단위로 표시
+- **작업 강제 중지** — `agent.abort()` 시그널 전송
+- **도구 재주입** — `assets/tool_usable_history.json`을 backend history에 append, 도구 사용 예시를 다시 컨텍스트에 올림
+- **🐱 데스크탑 펫** — `desktop_pet_v2.pyw`(없으면 `desktop_pet.pyw`)를 subprocess로 띄우고 `_turn_end_hooks['pet']`을 등록. 자세히는 [데스크탑 펫 띄우기](/guides/desktop-pet) 참고
+- **자율 행동 허용 / 중지** — `st.session_state.autonomous_enabled` 토글. 허용을 누르면 `last_reply_time`을 1800초 전으로 설정해 유휴 트리거를 즉시 활성화
+
+<Warning>`mykey.py`에 사용 가능한 LLM 설정이 하나도 없으면 `init()`이 `st.stop()`으로 즉시 종료합니다. 먼저 `mykey_template.py`를 복사해 키를 채워주세요.</Warning>

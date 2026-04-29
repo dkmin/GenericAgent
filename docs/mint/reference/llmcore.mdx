@@ -1,0 +1,95 @@
+---
+title: "llmcore 세션 API"
+sidebarTitle: "llmcore"
+description: "ClaudeSession / NativeClaudeSession / NativeOAISession / MixinSession 시그니처."
+icon: "code"
+---
+
+[`llmcore.py`](https://github.com/dkmin/GenericAgent/blob/main/llmcore.py) 가 모든 LLM 백엔드를 정의합니다.
+
+## BaseSession
+
+모든 세션의 공통 베이스. `cfg` 딕셔너리에서 다음 필드를 읽습니다.
+
+<ParamField path="apikey" type="string" required>
+  API Key. Claude는 `sk-ant-` 접두사면 `x-api-key`, 그 외엔 `Authorization: Bearer`.
+</ParamField>
+<ParamField path="apibase" type="string" required>
+  엔드포인트 (예: `https://api.anthropic.com`).
+</ParamField>
+<ParamField path="model" type="string">
+  모델명. `[1m]` 접미사는 Claude 1M context beta 트리거.
+</ParamField>
+<ParamField path="name" type="string" default="model">
+  표시 이름 + Mixin 참조 키.
+</ParamField>
+<ParamField path="context_win" type="int" default="28000">
+  히스토리 트리밍 임계값.
+</ParamField>
+<ParamField path="thinking_type" type="enum">
+  `adaptive` | `enabled` | `disabled` (Claude 전용).
+</ParamField>
+<ParamField path="thinking_budget_tokens" type="int">
+  `thinking_type='enabled'` 일 때 필수.
+</ParamField>
+<ParamField path="reasoning_effort" type="enum">
+  `none` | `minimal` | `low` | `medium` | `high` | `xhigh`.
+</ParamField>
+<ParamField path="api_mode" type="enum" default="chat_completions">
+  `chat_completions` | `responses` (OpenAI).
+</ParamField>
+<ParamField path="temperature" type="float" default="1" />
+<ParamField path="max_tokens" type="int" />
+<ParamField path="proxy" type="string">
+  HTTP/HTTPS 프록시 URL.
+</ParamField>
+<ParamField path="max_retries" type="int" default="4" />
+<ParamField path="read_timeout" type="int" default="30 (stream) / 240 (non-stream)" />
+<ParamField path="stream" type="bool" default="true" />
+<ParamField path="verify" type="bool" default="true">
+  TLS 검증.
+</ParamField>
+<ParamField path="service_tier" type="enum">
+  `auto` | `default` | `priority` | `flex`.
+</ParamField>
+
+## 세션 클래스
+
+| 클래스 | 용도 |
+|---|---|
+| `ClaudeSession(BaseSession)` | Anthropic Claude `/v1/messages` 텍스트 모드 (도구는 텍스트로 임베드). |
+| `LLMSession(BaseSession)` | OpenAI 호환 `/v1/chat/completions` 텍스트 모드. |
+| `NativeClaudeSession(BaseSession)` | Anthropic 네이티브 function-calling. |
+| `NativeOAISession(NativeClaudeSession)` | OpenAI 네이티브 function-calling 또는 `/v1/responses`. |
+| `MixinSession` | 다중 세션 페일오버. 동종(Native or non-Native) 그룹만 허용. |
+
+## MixinSession
+
+```python
+MixinSession(all_sessions, cfg)
+```
+
+`cfg` 필드:
+
+- `llm_nos` — `name` 또는 인덱스 리스트
+- `max_retries` (기본 3)
+- `base_delay` (기본 1.5초, 지수 백오프)
+- `spring_back` (기본 300초 — 보조로 전환 후 이 시간이 지나면 primary로 복귀)
+
+브로드캐스트 속성: `system`, `tools`, `temperature`, `max_tokens`, `reasoning_effort`, `history`.
+
+## 사용 예
+
+```python
+from llmcore import NativeClaudeSession, NativeToolClient
+sess = NativeClaudeSession(cfg={
+    'name': 'claude',
+    'apikey': 'sk-ant-...',
+    'apibase': 'https://api.anthropic.com',
+    'model': 'claude-opus-4-7[1m]',
+    'thinking_type': 'adaptive',
+})
+client = NativeToolClient(sess)
+```
+
+자동 디스커버리는 [`mykey_template_en.py`](https://github.com/dkmin/GenericAgent/blob/main/mykey_template_en.py) 참고 — 변수명에 `claude`/`oai`/`native`/`mixin` 키워드가 들어가면 적절한 세션 클래스로 매핑됩니다.

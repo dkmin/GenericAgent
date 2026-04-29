@@ -1,0 +1,84 @@
+---
+title: "ocr_utils.py + ui_detect.py"
+sidebarTitle: "OCR / UI Detect"
+description: "로컬 OCR (rapidocr) + YOLO 기반 UI 요소 검출 — vision API 회피"
+icon: "font"
+---
+
+## 언제 쓰는가
+스크린샷에서 텍스트나 UI 요소(버튼/아이콘) 위치를 찾을 때. **vision API보다 우선** — 더 빠르고 무료.
+
+## 작동 원리 (Why)
+Vision API는 비싸고 환각이 있습니다. 로컬 OCR (`rapidocr-onnxruntime`)은 ~1초/회, 중영문 정확도 높고 bbox 제공. UI 요소는 OmniParser YOLO 모델로 검출.
+
+## ocr_utils.py
+
+### API
+```python
+import sys
+sys.path.append("../memory")
+from ocr_utils import ocr_image, ocr_screen, ocr_window
+
+# 1. 이미지 파일 또는 PIL Image
+r = ocr_image("path/to/img.png")
+# → {'text': 전문, 'lines': [...], 'details': [{'bbox':..., 'text':..., 'conf':...}, ...]}
+
+# 2. 화면 영역
+r = ocr_screen(bbox=(0, 0, 400, 100))
+
+# 3. 특정 창 (RDP 단절 환경에서도 작동)
+r = ocr_window(hwnd)
+```
+
+### 알려진 함정 (코드 헤더 주석)
+
+<Warning>
+- **rapidocr conf 타입**: `result[i][2]` conf는 `str`이지 `float` 아님 (코드 안에서 `float()` 강제 변환됨)
+- **무문자 시 None 반환**: rapidocr는 텍스트 없으면 `None` (빈 리스트 아님)
+- **enhance 함정**: 확대+고대비 처리는 **선명한 텍스트에 해롭다** — 기본 비활성, 흐릿할 때만 켜기
+- **RDP 단절 시 검은 화면**: `ImageGrab/mss`는 RDP 단절 후 전체 검정 — `ocr_window(hwnd)`로 PrintWindow API 사용
+</Warning>
+
+### CJK 공백 정리
+중→중 사이 공백 자동 제거 (`_strip_cjk_spaces`) — OCR이 자주 한자 사이 공백을 끼움.
+
+## ui_detect.py
+
+OmniParser YOLO 모델로 UI 요소 bbox 검출 + (옵션) rapidocr 텍스트 결합.
+
+### CLI
+```bash
+python ui_detect.py <이미지> [모델 경로] [출력 경로]
+# 예
+python ui_detect.py screenshot.png weights/icon_detect/model.pt output.png
+```
+
+출력:
+- `output.png` — 검출 박스 시각화 (UI 요소=빨강, OCR 텍스트=파랑)
+- `output.json` — `{ ui_elements: [...], ocr_texts: [...] }`
+
+### Python API
+```python
+from ui_detect import detect_ui_elements, ocr_text, visualize
+
+dets = detect_ui_elements(image_path, conf_threshold=0.25)
+# → [{'bbox':[x1,y1,x2,y2], 'confidence': 0.87, 'class': 0}, ...]
+
+texts = ocr_text(image_path)
+# → [{'text':..., 'bbox':..., 'confidence':...}, ...]
+```
+
+### 모델 경로 기본값
+`temp/weights/icon_detect/model.pt` — 없으면 다운로드 필요.
+
+## 자주 빠지는 함정
+
+<Warning>
+- **rapidocr 미설치**: `ui_detect.py`는 OCR 부분 자동 스킵 (HAS_OCR=False) — 경고만 출력
+- **YOLO model.pt 미준비**: 첫 실행 시 다운로드 필요할 수 있음 (~/.config/Ultralytics/ 등)
+- **OCR 결과의 conf**: rapidocr는 `str`로 반환되므로 직접 비교 시 `float()` 변환 잊지 말 것
+</Warning>
+
+## 관련
+- [Vision SOP](/memory/sops/vision) (OCR로 안 될 때만 vision)
+- [vision_api.template](/memory/helpers/vision-api-template)

@@ -1,0 +1,59 @@
+---
+title: "Vision API SOP"
+sidebarTitle: "Vision"
+description: "vision은 최후 수단 — 창 제목/OCR로 충분하면 호출 금지"
+icon: "eye"
+---
+
+## 언제 쓰는가
+이미지/스크린샷에서 정보를 추출해야 하는데 OCR로 안 되는 경우 (시맨틱 이해 필요, 아이콘 인식, 레이아웃 분석 등).
+
+## 작동 원리 (Why)
+Vision API는 비싸고 느리고 종종 환각(hallucination)을 일으킵니다. 그래서 **창 제목 / 로컬 OCR (`ocr_utils.py`) 로 필요한 정보를 얻을 수 있다면 vision 호출 금지**. token 절약하고 더 신뢰할 수 있음.
+
+## ⚠️ 사전 규칙 (반드시 준수)
+
+<Warning>
+1. **먼저 창 열거**: vision 호출 전 반드시 `pygetwindow`로 창 제목 열거하여 대상 창 존재·전면 활성화 확인. 창 없으면 스크린샷 금지.
+2. **🚫 전체 화면 스크린샷 금지**: 반드시 `ljqCtrl`로 창 영역 캡처. 부분(타이틀바)으로 충분하면 창 전체도 안 됨, 창으로 충분하면 절대 전체 화면 안 됨. **어떤 시나리오에서도 허용 안 됨**.
+3. **vision 안 써도 되면 안 쓰기**: 창 제목/OCR로 정보 얻을 수 있으면 호출 금지. Vision은 최후 수단.
+</Warning>
+
+## 빠른 사용법
+
+```python
+from vision_api import ask_vision
+
+result = ask_vision(
+    image,                              # 파일 경로 (str/Path) 또는 PIL Image
+    prompt="이미지 내용 설명",
+    backend="claude",                   # 'claude' (기본) | 'openai' | 'modelscope'
+    timeout=60,
+    max_pixels=1_440_000
+)
+# 반환 str: 성공 시 모델 응답, 실패 시 'Error: ...'
+```
+
+## vision_api.py 최초 구축
+
+`vision_api.py`가 없을 때:
+
+1. `memory/vision_api.template.py` → `memory/vision_api.py` 복사
+2. 헤더의 "사용자 설정 영역"만 수정:
+   - `mykey.py`에서 변수명 스캔 (⚠️ **이름만 보고, apikey 값 출력 금지**)
+   - 사용 가능한 설정명을 `CLAUDE_CONFIG_KEY` / `OPENAI_CONFIG_KEY`에 채움
+   - `DEFAULT_BACKEND`로 백엔드 선택
+3. **폴백**: 사용 가능한 config 없으면 `https://modelscope.cn/my/myaccesstoken` 에서 token 발급, `MODELSCOPE_API_KEY`에 입력
+
+## 자주 빠지는 함정
+
+<Warning>
+- 전체 화면 스크린샷은 **어떤 시나리오에서도 금지** — 사용자 프라이버시·token 낭비
+- mykey.py 스캔 시 apikey 값 print 금지 (변수명만)
+- vision은 비싸므로 OCR로 가능한 작업에 쓰면 ROI 마이너스
+</Warning>
+
+## 관련
+- [Helper: vision_api 템플릿](/memory/helpers/vision-api-template)
+- [Helper: OCR/UI Detect](/memory/helpers/ocr-ui-detect)
+- [ljqCtrl SOP](/memory/sops/ljqctrl) (창 영역 캡처)

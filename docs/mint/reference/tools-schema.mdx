@@ -1,0 +1,66 @@
+---
+title: "tools_schema.json 포맷"
+sidebarTitle: "Tools Schema"
+description: "9개 원자 도구의 JSON 스키마와 변형."
+icon: "file-code"
+---
+
+`assets/tools_schema.json` 은 OpenAI function-calling 호환 형식의 JSON 배열입니다.
+
+## 구조
+
+```json
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "code_run",
+      "description": "Code executor. Prefer python. ...",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "script": {"type": "string", "description": "..."},
+          "type":   {"type": "string", "enum": ["python", "powershell"], "default": "python"},
+          "timeout":{"type": "integer", "default": 60},
+          "cwd":    {"type": "string"},
+          "inline_eval": {"type": "boolean"}
+        }
+      }
+    }
+  },
+  ...
+]
+```
+
+## 변형 파일
+
+| 파일 | 사용처 |
+|---|---|
+| `tools_schema.json` | 기본 (Windows) — `code_run.type` enum: `python`, `powershell`. |
+| 비-Windows 자동 변환 | `agentmain.py:17` 가 `'powershell'` → `'bash'` 로 치환. |
+| `tools_schema_cn.json` | GLM / MiniMax / Kimi 모델용 (`agentmain.py:89`). |
+| `tools_schema_en.json` | (있으면) 영어 환경용. |
+
+## 9개 도구 항목
+
+| name | 카테고리 | 비고 |
+|---|---|---|
+| `code_run` | 실행 | 응답의 코드 블록 또는 `script` 인자. |
+| `file_read` | 파일 | `keyword` 검색 지원. |
+| `file_patch` | 파일 | 유일한 매치 필요. |
+| `file_write` | 파일 | `<file_content>` 본문 + `mode` (overwrite/append/prepend). |
+| `web_scan` | 웹 | 단순화 HTML, `text_only` 옵션. |
+| `web_execute_js` | 웹 | `save_to_file`, `no_monitor`, `switch_tab_id`. |
+| `update_working_checkpoint` | 메모리 | 단기 메모 (`<200` 토큰). |
+| `ask_user` | UX | `candidates` 빠른 선택. |
+| `start_long_term_update` | 메모리 | 인자 없음. |
+
+## 로드 시점
+
+`agentmain.py:14-17` 의 `load_tool_schema(suffix='')` 가 LLM 전환 시마다 다시 로드합니다.
+
+```python
+def load_tool_schema(suffix=''):
+    TS = open(f'assets/tools_schema{suffix}.json').read()
+    TOOLS_SCHEMA = json.loads(TS if os.name == 'nt' else TS.replace('powershell', 'bash'))
+```

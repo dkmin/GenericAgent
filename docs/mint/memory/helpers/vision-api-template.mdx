@@ -1,0 +1,72 @@
+---
+title: "vision_api.template.py"
+sidebarTitle: "Vision API Template"
+description: "Claude/OpenAI/ModelScope 3개 백엔드 통합 vision 호출 템플릿"
+icon: "image"
+---
+
+## 언제 쓰는가
+OCR/창 제목으로 정보 추출이 안 될 때 (`Vision SOP`의 사전 규칙 통과 후). 처음 vision 능력을 구축할 때 이 템플릿을 복사.
+
+## 작동 원리 (Why)
+Vision API는 백엔드마다 요청 형식이 다릅니다. Claude는 `/v1/messages`, OpenAI 호환은 `/v1/chat/completions`. 매번 cURL/requests 코드를 다시 짜는 건 낭비라 **3개 백엔드 통합 템플릿**을 두고 사용자 설정 영역만 수정.
+
+## 설치 흐름
+
+1. `memory/vision_api.template.py` → `memory/vision_api.py` 복사
+2. 헤더의 사용자 설정 영역만 수정:
+
+```python
+# ============ 사용자 설정 영역 ============
+CLAUDE_CONFIG_KEY  = 'claude_config141'   # mykey.py 변수명
+OPENAI_CONFIG_KEY  = 'oai_config1'        # mykey.py 변수명
+MODELSCOPE_API_KEY = ''                   # ModelScope token 직접 입력
+DEFAULT_BACKEND    = 'claude'             # 'claude' | 'openai' | 'modelscope'
+# ==========================================
+```
+
+3. **mykey.py 스캔 시 변수명만 보고 apikey 값 print 금지**
+
+## API
+
+```python
+from vision_api import ask_vision
+
+result = ask_vision(
+    image_input,                        # 파일 경로 또는 PIL Image
+    prompt="이미지 내용 설명",
+    timeout=60,
+    max_pixels=1_440_000,               # 자동 축소
+    backend=DEFAULT_BACKEND
+)
+# → str: 성공 시 모델 응답, 실패 시 'Error: ...'
+```
+
+## 내부 처리 흐름
+
+1. `_prepare_image` — PIL 로드 → max_pixels 초과 시 LANCZOS 축소 → RGBA→RGB → JPEG q=80 → base64
+2. `_call_claude` — `/v1/messages` + `x-api-key` 헤더, `image/jpeg` base64
+3. `_call_openai_compat` — `/v1/chat/completions` + `Bearer` 헤더, `image_url` data URL
+4. ModelScope는 OpenAI 호환 포맷, 모델 `Qwen/Qwen3-VL-235B-A22B-Instruct`
+
+## 폴백 전략
+
+```
+mykey.py에 사용 가능한 config 없음
+  → https://modelscope.cn/my/myaccesstoken 에서 token 발급
+  → MODELSCOPE_API_KEY에 입력
+  → backend='modelscope' 로 호출
+```
+
+## 자주 빠지는 함정
+
+<Warning>
+- **이름만 보고 값 출력 금지**: mykey.py 스캔 시 변수명만 list, apikey 값을 print하면 로그에 평문 노출
+- **이미지 모드**: RGBA/LA/P 모드는 자동으로 RGB(255,255,255 배경)로 변환됨 — 투명도 정보 손실 인지
+- **max_pixels 자동 축소**: 1.44MP 초과 시 LANCZOS 축소. 매우 큰 이미지는 디테일 손실
+- **timeout 기본 60s**: 큰 이미지나 느린 백엔드는 타임아웃 가능 → backend별 적정값 조정
+</Warning>
+
+## 관련
+- [Vision SOP](/memory/sops/vision)
+- [keychain.py](/memory/helpers/keychain) (apikey 관리)

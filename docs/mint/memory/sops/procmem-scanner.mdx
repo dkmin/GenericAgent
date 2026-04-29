@@ -1,0 +1,57 @@
+---
+title: "Process Memory Scanner SOP"
+sidebarTitle: "ProcMem Scanner"
+description: "프로세스 메모리에서 hex/string 패턴 검색 — LLM 모드로 컨텍스트 분석"
+icon: "memory"
+---
+
+## 언제 쓰는가
+WeChat 등 자체 그리는 UI에서 메모리 필드(현재 대화 제목 등)를 찾거나, 구조체/매직 넘버 위치를 확인해야 할 때.
+
+## 작동 원리 (Why)
+DOM/접근성 트리가 없는 네이티브 앱에서는 UI에서 정보를 못 빼냅니다. 하지만 그 정보는 메모리에 있습니다. CE(Cheat Engine) 식 패턴 매칭으로 위치를 찾고, LLM 모드로 컨텍스트(전후 바이트 + ASCII)를 분석.
+
+## 빠른 시작
+
+### Python 호출
+```python
+import sys
+sys.path.append('../memory')
+from procmem_scanner import scan_memory
+
+# Hex 패턴 + LLM 컨텍스트
+results = scan_memory(pid, "48 8b ?? ?? 00", mode="hex", llm_mode=True)
+```
+
+### CLI
+```powershell
+# 기본 검색
+python ../memory/procmem_scanner.py <PID> "pattern" --mode string
+
+# LLM 강화 모드 (JSON 출력, 권장)
+python ../memory/procmem_scanner.py <PID> "pattern" --llm
+```
+
+## 전형적 시나리오: 구조체/핵심 데이터 위치 찾기
+
+1. 대상 데이터의 선행 패턴 또는 알려진 상수 (Header, Magic Number) 확정
+2. 대상 프로세스에서 패턴 검색:
+   ```python
+   scan_memory(pid, "4D 5A 90 00", mode="hex", llm_mode=True)
+   ```
+3. 반환 JSON의 `context` 필드 분석 — 대상 주소 전후 원시 바이트 + ASCII 미리보기
+
+## CE 식 차집합 스캔
+
+WeChat 등 자체 UI에서 조작에 따라 변하는 메모리 필드 위치 찾기. 핵심: **1회 전체 scan + 다회 ReadProcessMemory 필터링**.
+
+## 자주 빠지는 함정
+
+<Warning>
+- **권한**: 관리자 권한 강제는 아니나 대상 프로세스의 `PROCESS_QUERY_INFORMATION` + `PROCESS_VM_READ` 권한 필요
+- **효율**: 큰 메모리 블록 검색 시 가능한 한 **고유한 패턴**을 제공해 오탐 감소
+</Warning>
+
+## 관련
+- [TMWebDriver SOP](/memory/sops/tmwebdriver) (DOM 있는 경우)
+- [adb_ui Helper](/memory/helpers/adb-ui) (Android의 경우)

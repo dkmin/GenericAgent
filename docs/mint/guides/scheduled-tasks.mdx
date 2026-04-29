@@ -1,0 +1,97 @@
+---
+title: "스케줄 작업 등록하기"
+description: "sche_tasks/*.json 파일 한 개로 매일 또는 N시간마다 자동 실행되는 작업을 만듭니다."
+sidebarTitle: "Scheduled Tasks"
+icon: "clock"
+---
+
+<Note>스케줄러는 `reflect/scheduler.py`가 `agentmain.py --reflect ...` 형식으로 별도 프로세스에서 도는 구조입니다. `launch.pyw --sched`로 함께 띄울 수 있고, port lock으로 중복 기동을 막습니다.</Note>
+
+## 1. 스케줄러 기동
+
+```bash
+python launch.pyw --sched               # Streamlit + 스케줄러
+python launch.pyw --sched --llm_no 2    # 스케줄러가 사용할 mixin 라인 지정
+```
+
+`launch.pyw` 127–131번째 줄을 그대로 옮기면 다음과 같습니다.
+
+```python
+scheduler_proc = subprocess.Popen([
+    sys.executable, os.path.join(script_dir, "agentmain.py"),
+    "--reflect", os.path.join(script_dir, "reflect", "scheduler.py"),
+    "--llm_no", str(args.llm_no)
+])
+```
+
+## 2. 작업 JSON 작성
+
+`memory/scheduled_task_sop.md`가 정의하는 형식 그대로입니다.
+
+<CodeGroup>
+```json sche_tasks/morning_brief.json
+{
+  "schedule": "09:00",
+  "repeat": "daily",
+  "enabled": true,
+  "prompt": "오늘 아침 시황을 요약해 주세요. 한국·미국 주요 지수, 환율, 핵심 뉴스 5건을 한 페이지로 정리합니다.",
+  "max_delay_hours": 6
+}
+```
+
+```json sche_tasks/weekly_review.json
+{
+  "schedule": "18:00",
+  "repeat": "weekly",
+  "enabled": true,
+  "prompt": "지난 주 autonomous_reports/ 를 훑어서 핵심 학습 3가지를 뽑아 주세요."
+}
+```
+
+```json sche_tasks/every_6h_health.json
+{
+  "schedule": "00:00",
+  "repeat": "every_6h",
+  "enabled": true,
+  "prompt": "디스크 사용량과 주요 프로세스 상태를 점검하고 이상이 있으면 보고합니다."
+}
+```
+</CodeGroup>
+
+### 필드 정의
+
+| 필드 | 설명 |
+| --- | --- |
+| `schedule` | 24시간 표기 `HH:MM` |
+| `repeat` | `daily` / `weekday` / `weekly` / `monthly` / `once` / `every_Nh` / `every_Nd` |
+| `enabled` | `false`면 스킵 |
+| `prompt` | 에이전트에 전달할 작업 지시 |
+| `max_delay_hours` | (선택, 기본 6) 부팅이 늦어 N시간 이상 지난 작업은 건너뜀 |
+
+## 3. 트리거 흐름
+
+<Steps>
+  <Step title="60초 폴링">
+    `scheduler.py`가 60초마다 `sche_tasks/*.json`을 읽습니다.
+  </Step>
+  <Step title="조건 평가">
+    `enabled=true` AND 현재 시각 ≥ `schedule` AND 쿨다운 경과(`sche_tasks/done/` 최신 보고서 타임스탬프 기준)일 때만 트리거합니다.
+  </Step>
+  <Step title="prompt 주입">
+    스케줄러가 보고서 경로 `sche_tasks/done/YYYY-MM-DD_<작업명>.md`를 prompt에 자동 주입합니다.
+  </Step>
+  <Step title="첫 액션은 checkpoint">
+    SOP 규약상 작업 수신 후 가장 먼저 `update_working_checkpoint`로 보고서 대상 파일 경로를 적어둬야 긴 작업 중 잊지 않습니다.
+  </Step>
+  <Step title="보고서 작성">
+    실행 완료 후 위 경로에 보고서를 씁니다. 스케줄러는 이 파일이 있는지로 오늘 실행 여부를 판정합니다.
+  </Step>
+</Steps>
+
+## 4. 모니터링
+
+- 로그: `sche_tasks/scheduler.log` (트리거/스킵/에러)
+- 상태 조회: `scheduler.health_check()` → `HEALTHY / OVERDUE / DISABLED / NEVER_RUN / ERROR`
+- JSON 파싱 오류, 잘못된 `schedule` 형식, 알 수 없는 `repeat`은 모두 로그에 남습니다.
+
+<Warning>`once` 유형은 1회 실행 후 100년 쿨다운으로 사실상 영구 스킵됩니다. 다시 돌리려면 `done/`에서 해당 보고서를 지우거나 새 `once` 작업을 만드세요.</Warning>

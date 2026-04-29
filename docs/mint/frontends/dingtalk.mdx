@@ -1,0 +1,36 @@
+---
+title: "DingTalk 봇"
+sidebarTitle: "DingTalk"
+description: "딩톡 스트림 모드 봇 — dingtalk-stream SDK 기반."
+icon: "comment-dots"
+---
+
+[`frontends/dingtalkapp.py`](https://github.com/dkmin/GenericAgent/blob/main/frontends/dingtalkapp.py) 는 `dingtalk-stream` 의 `DingTalkStreamClient` 로 콜백을 수신합니다.
+
+## 진입 명령
+
+```bash
+python launch.pyw --dingtalk      # 또는 --dt
+python frontends/dingtalkapp.py
+```
+
+단일 인스턴스 락은 `127.0.0.1:19530` 입니다.
+
+## 필수 설정
+
+```python
+# mykey.py
+dingtalk_client_id     = '...'   # 앱의 AppKey
+dingtalk_client_secret = '...'   # 앱의 AppSecret
+dingtalk_allowed_users = []      # 허용할 staff_id 목록
+```
+
+`pip install dingtalk-stream` 필요 (`dingtalkapp.py:13`).
+
+## 주요 기능
+
+- **스트림 콜백 모드** — 공인 IP/웹훅 불필요, OAuth2로 access_token 자동 발급.
+- **지수 백오프 재연결** — 5초→300초까지 지수 증가, 60초 이상 살아있던 세션은 백오프 리셋 (`dingtalkapp.py:110-122`).
+- **그룹/1대1 자동 분기** — `conversationType` 에 따라 `groupMessages/send` vs `oToMessages/batchSend` 호출.
+- **음성 인식 입력** — `extensions.content.recognition` 도 텍스트로 처리.
+- **단문 분할 1800자** — `split_limit = 1800`.

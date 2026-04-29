@@ -1,0 +1,104 @@
+---
+title: "About 100줄짜리 에이전트 루프"
+sidebarTitle: "Agent Loop"
+description: "agent_loop.py의 ~123줄이 책임지는 4가지 — 프롬프트 조립 · tool dispatch · 결과 파싱 · 메모리 업데이트."
+icon: "arrows-rotate"
+---
+
+## 한눈에 보기
+
+`agent_loop.py`는 **123줄**입니다. 이 안에 GenericAgent의 턴 루프 전체가 들어있습니다.
+
+```python
+def agent_runner_loop(client, system_prompt, user_input, handler,
+                     tools_schema, max_turns=40, verbose=True,
+                     initial_user_content=None):
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": initial_user_content or user_input}
+    ]
+    turn = 0; handler.max_turns = max_turns
+    while turn < handler.max_turns:
+        turn += 1
+        if turn % 10 == 0: client.last_tools = ''  # 10턴마다 도구 설명 리셋
+        response_gen = client.chat(messages=messages, tools=tools_schema)
+        ...
+```
+
+## 루프가 책임지는 4가지
+
+<CardGroup cols={2}>
+  <Card title="1. 프롬프트 조립" icon="layer-group">
+    `system_prompt` + 첫 user 메시지로 messages를 구성. 다음 턴부터는 핸들러가 만든 `next_prompt`와 `tool_results`만 새 메시지로 추가합니다 — **history는 *Session 쪽이 관리**합니다.
+  </Card>
+  <Card title="2. Tool Dispatch" icon="route">
+    `response.tool_calls`를 파싱해 `handler.dispatch(tool_name, args, ...)`로 라우팅. 핸들러가 `do_<tool_name>` 메서드를 찾아 실행합니다.
+  </Card>
+  <Card title="3. 결과 파싱" icon="filter">
+    각 도구의 `StepOutcome(data, next_prompt, should_exit)`를 모아 `tool_results` 리스트와 `next_prompts` 집합을 만듭니다. `should_exit` 또는 `next_prompt=None`이면 종료.
+  </Card>
+  <Card title="4. 턴 종료 콜백" icon="rotate-right">
+    `handler.turn_end_callback(...)`가 다음 턴 프롬프트를 최종 결정합니다. 메모리 업데이트·체크포인트 인젝션이 여기서 일어납니다.
+  </Card>
+</CardGroup>
+
+## 종료 조건 — `StepOutcome`
+
+```python
+@dataclass
+class StepOutcome:
+    data: Any
+    next_prompt: Optional[str] = None
+    should_exit: bool = False
+```
+
+| 결과 | 의미 |
+|---|---|
+| `should_exit=True` | 즉시 루프 탈출 (`EXITED`) |
+| `next_prompt=None` | 현재 작업 완료 (`CURRENT_TASK_DONE`) |
+| `next_prompt='...'` | 같은 작업을 계속, 새 프롬프트로 다음 턴 |
+| max_turns 초과 | `MAX_TURNS_EXCEEDED` (기본 40턴) |
+
+`_done_hooks`가 남아있으면 `CURRENT_TASK_DONE` 후에도 후속 hook이 실행됩니다 — 메모리 결정체화가 작업 종료 직후 자동 트리거되는 메커니즘입니다.
+
+## 컨텍스트 부풀이 방지
+
+```python
+if turn % 10 == 0: client.last_tools = ''
+# 每10轮重置一次工具描述，避免上下文过大导致的模型性能下降
+```
+
+10턴마다 도구 설명 캐시를 리셋합니다. 컨텍스트가 부풀어오를 때 모델 성능이 떨어지는 현상을 방지하기 위한 의도적인 장치입니다.
+
+## 검증되지 않은 도구 처리
+
+```python
+elif tool_name == 'bad_json':
+    return StepOutcome(None, next_prompt=args.get('msg', 'bad_json'),
+                       should_exit=False)
+else:
+    yield f"未知工具: {tool_name}\n"
+    return StepOutcome(None, next_prompt=f"未知工具 {tool_name}",
+                       should_exit=False)
+```
+
+LLM이 잘못된 JSON을 뱉거나 존재하지 않는 도구를 호출해도 루프는 죽지 않습니다. 다음 턴에 에러 메시지를 주고 LLM이 스스로 수정하도록 합니다 — 동시에 `client.last_tools`를 비워 도구 스키마를 재주입합니다.
+
+## 스트리밍 vs Exhaust 모드
+
+```python
+if verbose:
+    response = yield from response_gen      # 스트리밍 출력
+else:
+    response = exhaust(response_gen)        # 한 번에 소진
+    cleaned = _clean_content(response.content)
+    if cleaned: yield cleaned + '\n'
+```
+
+`verbose` 플래그로 스트리밍 출력과 일괄 출력을 전환합니다. `_clean_content`는 코드 블록을 6줄 이상이면 5줄 + `... (N lines)`로 축약하고, `<file_content>`/`<tool_use>` 태그와 과도한 빈 줄을 제거합니다.
+
+## 더 보기
+
+- 전체 소스: `agent_loop.py` (123줄)
+- 핸들러 구현: `ga.py` (560줄)
+- LLM 어댑터: `llmcore.py` (982줄)

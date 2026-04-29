@@ -1,0 +1,51 @@
+---
+title: "CLI 플래그"
+sidebarTitle: "CLI Flags"
+description: "launch.pyw 와 agentmain.py 의 모든 argparse 옵션."
+icon: "terminal"
+---
+
+## launch.pyw
+
+런처 — Streamlit + 선택한 메신저 봇들을 동시 기동합니다.
+
+| 플래그 | 타입 | 설명 |
+|---|---|---|
+| `port` | positional | Streamlit 포트. `0` = 18501–18599 중 자동 할당 (기본). |
+| `--tg` | flag | Telegram 봇 시작. |
+| `--qq` | flag | QQ 봇 시작. |
+| `--feishu`, `--fs` | flag | Feishu 봇 시작. |
+| `--wecom` | flag | WeCom 봇 시작. |
+| `--dingtalk`, `--dt` | flag | DingTalk 봇 시작. |
+| `--sched` | flag | `agentmain.py --reflect reflect/scheduler.py` 를 함께 실행. |
+| `--llm_no` | int (기본 0) | 시작 시 LLM 인덱스. `--sched` 에 전달됨. |
+
+```bash
+python launch.pyw --tg --dt --sched --llm_no 1
+```
+
+## agentmain.py
+
+| 플래그 | 타입 | 설명 |
+|---|---|---|
+| `--task IODIR` | str | 일회성 파일 IO 모드. `temp/<IODIR>/input.txt` 읽고 `output*.txt` 로 결과 저장. `reply.txt` 로 후속 라운드 가능 (10분 타임아웃). |
+| `--reflect SCRIPT` | str | 반사 모드. 스크립트의 `check()` 가 작업 문자열을 반환하면 실행. `INTERVAL`(기본 5초), `ONCE`, `on_done(result)` 를 모듈 전역으로 정의 가능. |
+| `--input PROMPT` | str | `--task` 와 함께 사용. 초기 프롬프트를 파일에 쓴 뒤 실행. |
+| `--llm_no N` | int (기본 0) | 시작 LLM 인덱스. |
+| `--verbose` | flag | 자세한 로그. |
+| `--bg` | flag | `Popen` 으로 자기 자신을 백그라운드 실행, PID만 출력하고 종료. `--task IODIR` 와 같이 쓰면 `temp/<IODIR>/stdout.log`, `stderr.log` 에 기록. |
+
+플래그가 모두 비면 인터랙티브 REPL (`> ` 프롬프트, `inc_out=True`).
+
+## 예시
+
+```bash
+# 일회성 작업
+python agentmain.py --task mytask --input "프로젝트 구조를 보여줘"
+
+# 백그라운드 + 파일 IO
+python agentmain.py --task daily --reflect reflect/scheduler.py --bg
+
+# 반사 모드 (스케줄러)
+python agentmain.py --reflect reflect/scheduler.py --llm_no 1
+```

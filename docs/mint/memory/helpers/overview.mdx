@@ -1,0 +1,58 @@
+---
+title: "Helper 모듈 개요"
+sidebarTitle: "Helpers Overview"
+description: "atomic 9개를 안 늘리고 .py helper로 능력을 확장하는 철학"
+icon: "screwdriver-wrench"
+---
+
+## 언제 쓰는가
+새로운 시나리오에서 atomic tool 만으로 매번 재추론하기엔 비싸고, 로직이 복잡해 SOP 한 장으로 안 되는 경우.
+
+## 작동 원리 (Why)
+
+GenericAgent는 atomic tool을 **9개로 고정**합니다. 능력 확장은 두 갈래:
+
+1. **SOP (.md)** — 짧은 함정 체크리스트, 절차 메모
+2. **Helper (.py)** — 재사용성 높고 로직이 비교적 복잡하며 매번 재추론을 원치 않는 처리 흐름
+
+> Helper의 본질: atomic 9개를 위에서 조립해 만든 **재사용 가능한 sub-routine**.
+
+## 왜 atomic을 안 늘리는가
+
+도구가 100개가 되면 LLM은 어떤 도구를 언제 써야 할지 헷갈립니다 (도구 폭발). 대신:
+
+- atomic은 9개로 유지 → 모델이 항상 사용법을 기억
+- helper는 `import` 한 줄로 호출 가능 → 코드처럼 조립
+- 능력 확장 시 atomic schema 변경 0, helper만 추가
+
+## 현재 Helper 모듈
+
+<CardGroup cols={2}>
+  <Card title="keychain.py" icon="key" href="/memory/helpers/keychain">
+    secret을 print 안 하고 사용 — `keys.foo.use()`
+  </Card>
+  <Card title="adb_ui.py" icon="mobile-screen" href="/memory/helpers/adb-ui">
+    Android UI dump (u2 우선, native fallback)
+  </Card>
+  <Card title="ocr_utils.py + ui_detect.py" icon="font" href="/memory/helpers/ocr-ui-detect">
+    로컬 OCR + YOLO 기반 UI 요소 검출
+  </Card>
+  <Card title="vision_api.template.py" icon="eye" href="/memory/helpers/vision-api-template">
+    Claude/OpenAI/ModelScope 통합 vision 호출
+  </Card>
+</CardGroup>
+
+## Helper 작성 기준
+
+기록 안 함:
+- 한 번 쓰고 마는 임시 스크립트
+- atomic 도구 한 줄로 끝나는 것
+- 일반 절차 (subagent가 몇 단계 탐색으로 재구성 가능)
+
+기록함:
+- 재사용성 높고 매번 재추론 비싼 처리 흐름
+- 함정이 코드 안에 박혀 있어 .md로 옮기기 어려운 것 (예: ocr_utils의 RDP 검은 화면 회피)
+
+## 관련
+- [Atomic Tools 레퍼런스](/reference/atomic-tools)
+- [Memory Management SOP](/memory/sops/memory-management)

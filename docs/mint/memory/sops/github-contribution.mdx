@@ -1,0 +1,96 @@
+---
+title: "GitHub Contribution SOP"
+sidebarTitle: "GitHub PR"
+description: "오픈소스 PR — 한 PR 한 가지 일, 테스트 통과해야 push, 프로젝트 규칙 존중"
+icon: "github"
+---
+
+## 언제 쓰는가
+오픈소스 프로젝트에 PR 제출 (버그 수정 / 기능 추가 / 문서 수정). 코드만 읽고 변경 제출이 필요 없는 경우는 제외.
+
+## 작동 원리 (Why)
+PR은 maintainer의 시간을 빌립니다. 한 PR에 여러 일이 섞이면 review 비용이 폭증하고, 테스트 미통과 PR은 프로젝트 신뢰를 깎습니다. 그래서 **한 PR 한 가지 일, 테스트 게이트 강제**.
+
+## 사전 준비 (새 프로젝트 첫 진입)
+
+1. **프로젝트 규칙 읽기** (필수, 건너뛰기 금지)
+   ```python
+   file_read('CONTRIBUTING.md')
+   file_read('.github/PULL_REQUEST_TEMPLATE.md')
+   file_read('.github/ISSUE_TEMPLATE/')
+   ```
+2. **테스트 명령 파악**: `package.json` (scripts.test) / `Makefile` / `pyproject.toml`
+3. **Fork + Clone**:
+   ```bash
+   gh repo fork OWNER/REPO --clone && cd REPO && git remote -v
+   ```
+
+## 작업 흐름 (PR마다)
+
+### Step 1: 목표 확정
+관련 Issue 읽기, 한 줄로 명확히, 누가 이미 작업 중인지 확인.
+
+### Step 2: 브랜치 생성
+```bash
+git checkout -b fix/issue-설명 && git status
+```
+명명: `fix/xxx` / `feat/xxx` / `docs/xxx`
+
+### Step 3: 변경 구현
+- **최소 변경**: 무관한 코드 김에 리팩터링 금지
+- **프로젝트 스타일 준수**: 들여쓰기, 네이밍을 기존과 일치
+- **로직 단위마다 커밋**: `git commit -m "type: 짧은 설명"` (Conventional Commits)
+
+### Step 4: 테스트 (강제 게이트)
+```bash
+npm test  # 또는 pytest / go test ./...
+```
+체크: 기존 테스트 통과 / 신규 기능에 테스트 / lint·type check 통과
+
+<Warning>
+**테스트 미통과 시 push 금지**. 통과할 때까지 수정.
+</Warning>
+
+### Step 5: Push + PR
+PR 본문 필수: **What** (무엇을) / **Why** (왜, `Fixes #123`) / **Testing** (어떻게 테스트했는지)
+
+### Step 6: CI 확인
+```bash
+gh run view --log-failed
+```
+
+### Step 7: Review 대응
+- reviewer가 고치라면 고침, 스타일 취향으로 다투지 않음
+- 동의 안 되는 기술 결정은 정중히 이유 설명, 최종 판단은 maintainer 존중
+- **force push 금지** (squash 요청 제외)
+
+## 흔한 실수
+
+| 실수 | 올바른 방법 |
+|---|---|
+| 한 PR에 여러 일 | 독립 여러 PR로 분리 |
+| PR 제출 후 방치 | 매일 review 상태 확인 |
+| 테스트 안 돌리고 push | Step 4는 강제 게이트 |
+| commit message "update" | 무엇을 바꿨는지 구체적으로 |
+| force push로 review 이력 덮어쓰기 | commit 추가 |
+| PR 설명 비어있음 | What/Why/Testing 작성 |
+
+## 후속 상태 머신
+
+```
+PR 제출 → CI 대기
+  CI ✅ → Review 대기
+    Review 통과 → Merge ✅
+    수정 요구 → 수정 + 테스트 → CI 대기로 복귀
+  CI ❌ → 수정 → CI 대기로 복귀
+```
+
+매 라운드:
+```bash
+gh pr status
+gh pr checks PR_NUMBER
+gh pr view PR_NUMBER --comments
+```
+
+## 관련
+- [Plan Mode SOP](/memory/sops/plan-mode)

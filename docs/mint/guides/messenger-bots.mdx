@@ -1,0 +1,105 @@
+---
+title: "메신저 봇 연결하기"
+description: "Telegram, WeChat, WeCom, DingTalk, Feishu, QQ 6개 메신저에 동시에 동일한 에이전트를 붙입니다."
+sidebarTitle: "Messenger Bots"
+icon: "messages"
+---
+
+<Note>각 봇은 `frontends/<platform>app.py` 독립 프로세스로 실행됩니다. `launch.pyw` 플래그를 켜면 자식 프로세스로 띄우고, 종료 시 `atexit`로 함께 정리됩니다. 자격 증명은 `mykey.py`에 평문 변수로 둡니다.</Note>
+
+## 공통 흐름
+
+<Steps>
+  <Step title="mykey.py에 자격 증명 추가">
+    `mykey_template.py`의 "聊天平台集成" 블록에서 필요한 변수의 주석을 풀고 값을 채웁니다.
+  </Step>
+  <Step title="launch.pyw 플래그로 기동">
+    플래그를 조합해서 동시에 여러 봇을 띄울 수 있습니다. 예: `python launch.pyw --tg --wecom --sched`
+  </Step>
+  <Step title="허용 사용자 제한">
+    각 봇은 `*_allowed_users` 리스트로 화이트리스트를 둡니다. `['*']`은 모두 허용, 빈 리스트도 모두 허용입니다.
+  </Step>
+</Steps>
+
+## 플랫폼별 설정
+
+<Tabs>
+  <Tab title="Telegram">
+    ```python mykey.py
+    tg_bot_token = '8410xxxxx:AAxxxxxxxxxxxxxxxx'
+    tg_allowed_users = [6806xxxxx]
+    ```
+
+    ```bash
+    python launch.pyw --tg
+    ```
+
+    BotFather에서 `/newbot`으로 토큰을 발급받습니다. `tg_allowed_users`는 정수 user_id 리스트입니다.
+  </Tab>
+  <Tab title="WeChat">
+    `frontends/wechatapp.py`는 단일 인스턴스 락으로 19531 포트를 잡습니다(qq/wecom과 충돌 회피). 자격 증명은 모듈 내부 설정 또는 로그인 세션 캐시 방식에 따라 다르므로 `frontends/wechatapp.py`를 먼저 확인하세요.
+
+    ```bash
+    python frontends/wechatapp.py     # 단독 실행
+    ```
+  </Tab>
+  <Tab title="WeCom">
+    ```python mykey.py
+    wecom_bot_id = 'your_bot_id'
+    wecom_secret = 'your_bot_secret'
+    wecom_allowed_users = ['your_user_id']     # ['*']로 모두 허용
+    wecom_welcome_message = '你好，我在线上。'
+    ```
+
+    ```bash
+    python launch.pyw --wecom
+    ```
+  </Tab>
+  <Tab title="DingTalk">
+    ```python mykey.py
+    dingtalk_client_id = 'your_app_key'
+    dingtalk_client_secret = 'your_app_secret'
+    dingtalk_allowed_users = ['your_staff_id']
+    ```
+
+    ```bash
+    python launch.pyw --dingtalk
+    # 또는
+    python launch.pyw --dt
+    ```
+  </Tab>
+  <Tab title="Feishu / Lark">
+    ```python mykey.py
+    fs_app_id = 'cli_xxxxxxxxxxxxxxxx'
+    fs_app_secret = 'xxxxxxxxxxxxxxxx'
+    fs_allowed_users = ['ou_xxxxxxxxxxxxxxxx']
+    ```
+
+    ```bash
+    python launch.pyw --feishu
+    # 또는
+    python launch.pyw --fs
+    ```
+  </Tab>
+  <Tab title="QQ">
+    ```python mykey.py
+    qq_app_id = '123456789'
+    qq_app_secret = 'xxxxxxxxxxxxxxxx'
+    qq_allowed_users = ['your_user_openid']    # ['*']로 모두 허용
+    ```
+
+    ```bash
+    python launch.pyw --qq
+    ```
+  </Tab>
+</Tabs>
+
+<Warning>QQ / WeCom / WeChat 어댑터는 단일 인스턴스 락으로 각자 다른 포트를 점유합니다. 한 머신에 같은 봇을 두 번 띄우려 하면 두 번째는 즉시 종료됩니다.</Warning>
+
+## 모든 채널 동시 운영
+
+```bash
+python launch.pyw --tg --qq --feishu --wecom --dingtalk --sched
+```
+
+각 어댑터는 `chatapp_common`을 통해 동일한 `GeneraticAgent` 세마틱(슬래시 명령, `/continue`, history 추출)을 공유합니다.
