@@ -97,6 +97,7 @@ sche_tasks/
 assets/tmwd_cdp_bridge/config.js
 assets/copilot_proxy.pyw
 **log.*
+!CHANGELOG.md
 
 # Reflect (ignore new files, whitelist existing)
 reflect/*
