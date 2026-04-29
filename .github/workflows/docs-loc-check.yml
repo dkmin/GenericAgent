@@ -1,0 +1,27 @@
+name: Docs LOC Check
+
+on:
+  pull_request:
+    paths:
+      - 'agentmain.py'
+      - 'agent_loop.py'
+      - 'ga.py'
+      - 'llmcore.py'
+      - 'TMWebDriver.py'
+      - 'simphtml.py'
+      - 'launch.pyw'
+      - 'docs/mint/concepts/architecture.mdx'
+      - 'docs/mint/scripts/check_loc.py'
+  push:
+    branches: [main]
+
+jobs:
+  loc-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify architecture.mdx LOC claims
+        run: python docs/mint/scripts/check_loc.py
